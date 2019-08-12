@@ -1,11 +1,13 @@
 """Adds config flow for Blueprint."""
+import async_timeout
+import asyncio
 from collections import OrderedDict
-
 import voluptuous as vol
-from sampleclient.client import Client
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from integrationhelper import Logger
 from homeassistant import config_entries
 
-from .const import DOMAIN
+from .const import DOMAIN, DOMAIN_DATA
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -31,10 +33,12 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
 
         if user_input is not None:
             valid = await self._test_credentials(
-                user_input["username"], user_input["password"]
+                user_input["api_key"], user_input["check"]
             )
             if valid:
-                return self.async_create_entry(title="", data=user_input)
+                return self.async_create_entry(
+                    title=user_input["check"], data=user_input
+                )
             else:
                 self._errors["base"] = "auth"
 
@@ -46,38 +50,37 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         """Show the configuration form to edit location data."""
 
         # Defaults
-        username = ""
-        password = ""
+        api_key = ""
+        check = ""
 
         if user_input is not None:
-            if "username" in user_input:
-                username = user_input["username"]
-            if "password" in user_input:
-                password = user_input["password"]
+            if "api_key" in user_input:
+                api_key = user_input["api_key"]
+            if "check" in user_input:
+                check = user_input["check"]
 
         data_schema = OrderedDict()
-        data_schema[vol.Required("username", default=username)] = str
-        data_schema[vol.Required("password", default=password)] = str
+        data_schema[vol.Required("api_key", default=api_key)] = str
+        data_schema[vol.Required("check", default=check)] = str
         return self.async_show_form(
             step_id="user", data_schema=vol.Schema(data_schema), errors=self._errors
         )
 
-    async def async_step_import(self, user_input):  # pylint: disable=unused-argument
-        """Import a config entry.
-        Special type of import, we're not actually going to store any data.
-        Instead, we're going to rely on the values that are in config file.
-        """
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-
-        return self.async_create_entry(title="configuration.yaml", data={})
-
-    async def _test_credentials(self, username, password):
+    async def _test_credentials(self, api_key, check):
         """Return true if credentials is valid."""
         try:
-            client = Client(username, password)
-            client.get_data()
+            session = async_get_clientsession(self.hass)
+            headers = {"X-Api-Key": api_key}
+
+            async with async_timeout.timeout(10, loop=asyncio.get_event_loop()):
+                Logger("custom_components.healthchecksio").info("Checking API Key")
+                data = await session.get(
+                    "https://healthchecks.io/api/v1/checks/", headers=headers
+                )
+                self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
+                Logger("custom_components.healthchecksio").info("Checking Check ID")
+                data = await session.get(f"https://hc-ping.com/{check}")
             return True
-        except Exception:  # pylint: disable=broad-except
-            pass
+        except Exception as exception:  # pylint: disable=broad-except
+            Logger("custom_components.healthchecksio").error(exception)
         return False

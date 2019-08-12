@@ -1,0 +1,21 @@
+{
+    "config": {
+        "title": "Healthchecks.io",
+        "step": {
+            "user": {
+                "title": "Healthchecks.io",
+                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecks",
+                "data": {
+                    "api_key": "API key",
+                    "check": "Check ID"
+                }
+            }
+        },
+        "error": {
+            "auth": "API Key or Check ID is wrong."
+        },
+        "abort": {
+            "single_instance_allowed": "Only a single configuration of Blueprint is allowed."
+        }
+    }
+}

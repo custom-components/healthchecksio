@@ -5,13 +5,15 @@
 	"appPort": "8124:8123",
 	"runArgs": [
 		"-e",
-		"GIT_EDTIOR='code --wait'"
+		"GIT_EDITOR='code --wait'"
 	],
 	"extensions": [
 		"ms-python.python",
+		"github.vscode-pull-request-github",
 		"tabnine.tabnine-vscode"
 	],
 	"settings": {
+		"editor.tabSize": 4,
 		"python.pythonPath": "/usr/local/bin/python",
 		"python.linting.pylintEnabled": true,
 		"python.linting.enabled": true,
