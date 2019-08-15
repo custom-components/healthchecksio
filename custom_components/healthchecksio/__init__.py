@@ -53,10 +53,10 @@ async def async_setup_entry(hass, config_entry):
 
     # Get "global" configuration.
     api_key = config_entry.data.get("api_key")
-    monitor = config_entry.data.get("monitor")
+    check = config_entry.data.get("check")
 
     # Configure the client.
-    hass.data[DOMAIN_DATA]["client"] = HealthchecksioData(hass, api_key, monitor)
+    hass.data[DOMAIN_DATA]["client"] = HealthchecksioData(hass, api_key, check)
 
     # Add binary_sensor
     hass.async_add_job(
@@ -69,11 +69,11 @@ async def async_setup_entry(hass, config_entry):
 class HealthchecksioData:
     """This class handle communication and stores the data."""
 
-    def __init__(self, hass, api_key, monitor):
+    def __init__(self, hass, api_key, check):
         """Initialize the class."""
         self.hass = hass
         self.api_key = api_key
-        self.monitor = monitor
+        self.check = check
 
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update_data(self):
@@ -89,7 +89,7 @@ class HealthchecksioData:
                 )
                 self.hass.data[DOMAIN_DATA]["data"] = await data.json()
 
-            await session.get(f"https://hc-ping.com/{self.monitor}")
+                await session.get(f"https://hc-ping.com/{self.check}")
         except Exception as error:  # pylint: disable=broad-except
             Logger("custom_components.healthchecksio").error(
                 f"Could not update data - {error}"
