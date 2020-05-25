@@ -4,7 +4,7 @@
         "step": {
             "user": {
                 "title": "Healthchecks.io",
-                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecks",
+                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
                 "data": {
                     "api_key": "API key",
                     "check": "Check ID"
