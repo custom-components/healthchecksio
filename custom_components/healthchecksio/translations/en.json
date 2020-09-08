@@ -14,8 +14,7 @@
             }
         },
         "error": {
-            "unreachable": "Site root is unreachable.",
-            "auth": "API Key or Check ID is wrong."
+            "auth": "Site root, Ping endpoint, API Key or Check ID is wrong."
         },
         "abort": {
             "single_instance_allowed": "Only a single configuration of Blueprint is allowed."
