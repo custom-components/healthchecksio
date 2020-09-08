@@ -4,6 +4,14 @@
 
 This can **only** be configured in the UI.
 
+### Site Root
+
+This is the root URL of your Healthchecks.io instance.
+
+### Ping Endpoint
+
+This is the path of the endpoint used for pings.
+
 ### Check ID
 
 This is the ID of the check that this integration should update, this ID looks something like `aa247c51-8da8-4800-86a3-48763142e902`

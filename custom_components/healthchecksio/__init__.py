@@ -52,11 +52,14 @@ async def async_setup_entry(hass, config_entry):
             hass.data[DOMAIN_DATA] = {}
 
     # Get "global" configuration.
+    site_root = config_entry.data.get("site_root")
+    ping_endpoint = config_entry.data.get("ping_endpoint")
     api_key = config_entry.data.get("api_key")
     check = config_entry.data.get("check")
 
     # Configure the client.
-    hass.data[DOMAIN_DATA]["client"] = HealthchecksioData(hass, api_key, check)
+    hass.data[DOMAIN_DATA]["client"] = HealthchecksioData(
+        hass, site_root, ping_endpoint, api_key, check)
 
     # Add binary_sensor
     hass.async_add_job(
@@ -69,9 +72,11 @@ async def async_setup_entry(hass, config_entry):
 class HealthchecksioData:
     """This class handle communication and stores the data."""
 
-    def __init__(self, hass, api_key, check):
+    def __init__(self, hass, site_root, ping_endpoint, api_key, check):
         """Initialize the class."""
         self.hass = hass
+        self.site_root = site_root
+        self.ping_endpoint = ping_endpoint
         self.api_key = api_key
         self.check = check
 
@@ -81,15 +86,16 @@ class HealthchecksioData:
         Logger("custom_components.healthchecksio").debug("Running update")
         # This is where the main logic to update platform data goes.
         try:
-            session = async_get_clientsession(self.hass)
+            verify_ssl = self.site_root.startswith("https")
+            session = async_get_clientsession(self.hass, verify_ssl)
             headers = {"X-Api-Key": self.api_key}
             async with async_timeout.timeout(10, loop=asyncio.get_event_loop()):
                 data = await session.get(
-                    "https://healthchecks.io/api/v1/checks/", headers=headers
+                    f"{self.site_root}/api/v1/checks/", headers=headers
                 )
                 self.hass.data[DOMAIN_DATA]["data"] = await data.json()
 
-                await session.get(f"https://hc-ping.com/{self.check}")
+                await session.get(f"{self.site_root}/{self.ping_endpoint}/{self.check}")
         except Exception as error:  # pylint: disable=broad-except
             Logger("custom_components.healthchecksio").error(
                 f"Could not update data - {error}"
