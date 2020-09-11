@@ -96,7 +96,12 @@ class HealthchecksioData:
                     f"{self.site_root}/api/v1/checks/", headers=headers
                 )
                 self.hass.data[DOMAIN_DATA]["data"] = await data.json()
-                check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}" if self.self_hosted else f"https://hc-ping.com/{self.check}"
+
+                if self.self_hosted:
+                    check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
+                else:
+                    check_url = f"https://hc-ping.com/{self.check}"
+                await asyncio.sleep(0.00001)
                 await session.get(check_url)
         except Exception as error:  # pylint: disable=broad-except
             Logger("custom_components.healthchecksio").error(

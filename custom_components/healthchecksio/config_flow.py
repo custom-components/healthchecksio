@@ -86,8 +86,10 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             user_input["site_root"], user_input["ping_endpoint"]
         )
         if valid:
+            # merge data from initial config flow and this flow
+            data = {**self.initial_data, **user_input}
             return self.async_create_entry(
-                title=user_input["check"], data=user_input
+                title=self.initial_data["check"], data=data
             )
         else:
             self._errors["base"] = "auth"
@@ -124,8 +126,13 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
                     f"{site_root}/api/v1/checks/", headers=headers
                 )
                 self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
+
                 Logger("custom_components.healthchecksio").info("Checking Check ID")
-                check_url = f"{site_root}/{ping_endpoint}/{check}" if self_hosted else f"https://hc-ping.com/{check}"
+                if self_hosted:
+                    check_url = f"{site_root}/{ping_endpoint}/{check}"
+                else:
+                    check_url = f"https://hc-ping.com/{check}"
+                await asyncio.sleep(0.00001)
                 await session.get(check_url)
             return True
         except Exception as exception:  # pylint: disable=broad-except
