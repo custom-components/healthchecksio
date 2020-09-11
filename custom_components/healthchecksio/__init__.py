@@ -18,7 +18,15 @@ from homeassistant.util import Throttle
 from integrationhelper.const import CC_STARTUP_VERSION
 from integrationhelper import Logger
 
-from .const import DOMAIN_DATA, DOMAIN, ISSUE_URL, PLATFORMS, REQUIRED_FILES, VERSION, OFFICIAL_SITE_ROOT
+from .const import (
+    DOMAIN_DATA,
+    DOMAIN,
+    ISSUE_URL,
+    PLATFORMS,
+    REQUIRED_FILES,
+    VERSION,
+    OFFICIAL_SITE_ROOT,
+)
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 
@@ -60,7 +68,8 @@ async def async_setup_entry(hass, config_entry):
 
     # Configure the client.
     hass.data[DOMAIN_DATA]["client"] = HealthchecksioData(
-        hass, api_key, check, self_hosted, site_root, ping_endpoint)
+        hass, api_key, check, self_hosted, site_root, ping_endpoint
+    )
 
     # Add binary_sensor
     hass.async_add_job(

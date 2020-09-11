@@ -23,7 +23,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         self.initial_data = None
 
     async def async_step_user(
-            self, user_input={}
+        self, user_input={}
     ):  # pylint: disable=dangerous-default-value
         """Handle a flow initialized by the user."""
         self._errors = {}
@@ -39,8 +39,11 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
                 return await self._show_self_hosted_config_flow(user_input)
             else:
                 valid = await self._test_credentials(
-                    user_input["api_key"], user_input["check"],
-                    False, OFFICIAL_SITE_ROOT, None
+                    user_input["api_key"],
+                    user_input["check"],
+                    False,
+                    OFFICIAL_SITE_ROOT,
+                    None,
                 )
                 if valid:
                     user_input["self_hosted"] = False
@@ -76,21 +79,21 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         )
 
     async def async_step_self_hosted(
-            self, user_input={}
+        self, user_input={}
     ):  # pylint: disable=dangerous-default-value
         """Handle the step for a self-hosted instance."""
         self._errors = {}
         valid = await self._test_credentials(
-            self.initial_data["api_key"], self.initial_data["check"],
+            self.initial_data["api_key"],
+            self.initial_data["check"],
             True,
-            user_input["site_root"], user_input["ping_endpoint"]
+            user_input["site_root"],
+            user_input["ping_endpoint"],
         )
         if valid:
             # merge data from initial config flow and this flow
             data = {**self.initial_data, **user_input}
-            return self.async_create_entry(
-                title=self.initial_data["check"], data=data
-            )
+            return self.async_create_entry(title=self.initial_data["check"], data=data)
         else:
             self._errors["base"] = "auth"
 
@@ -111,10 +114,14 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         data_schema[vol.Required("site_root", default=site_root)] = str
         data_schema[vol.Required("ping_endpoint", default=ping_endpoint)] = str
         return self.async_show_form(
-            step_id="self_hosted", data_schema=vol.Schema(data_schema), errors=self._errors
+            step_id="self_hosted",
+            data_schema=vol.Schema(data_schema),
+            errors=self._errors,
         )
 
-    async def _test_credentials(self, api_key, check, self_hosted, site_root, ping_endpoint):
+    async def _test_credentials(
+        self, api_key, check, self_hosted, site_root, ping_endpoint
+    ):
         """Return true if credentials is valid."""
         try:
             verify_ssl = not self_hosted or site_root.startswith("https")
@@ -122,9 +129,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             headers = {"X-Api-Key": api_key}
             async with async_timeout.timeout(10, loop=asyncio.get_event_loop()):
                 Logger("custom_components.healthchecksio").info("Checking API Key")
-                data = await session.get(
-                    f"{site_root}/api/v1/checks/", headers=headers
-                )
+                data = await session.get(f"{site_root}/api/v1/checks/", headers=headers)
                 self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
 
                 Logger("custom_components.healthchecksio").info("Checking Check ID")
