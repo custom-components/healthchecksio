@@ -137,7 +137,8 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
                     check_url = f"{site_root}/{ping_endpoint}/{check}"
                 else:
                     check_url = f"https://hc-ping.com/{check}"
-                await asyncio.sleep(0.00001)
+                # needed for self-hosted instances
+                await asyncio.sleep(1)
                 await session.get(check_url)
             return True
         except Exception as exception:  # pylint: disable=broad-except
