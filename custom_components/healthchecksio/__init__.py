@@ -110,8 +110,7 @@ class HealthchecksioData:
                     check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
                 else:
                     check_url = f"https://hc-ping.com/{self.check}"
-                # needed for self-hosted instances
-                await asyncio.sleep(1)
+                await asyncio.sleep(1)  # needed for self-hosted instances
                 await session.get(check_url)
         except Exception as error:  # pylint: disable=broad-except
             Logger("custom_components.healthchecksio").error(
