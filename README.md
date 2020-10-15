@@ -35,6 +35,15 @@ The API key to your account.
 You find that under the "Settings" tab in your project.
 This can **not** be the "Read only" key.
 
+## For self-hosted instances
+
+### Site Root
+
+This is the root URL of your Healthchecks.io instance.
+
+### Ping Endpoint
+
+This is the path of the endpoint used for pings.
 
 ## Contributions are welcome!
 
