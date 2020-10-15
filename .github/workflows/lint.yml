@@ -9,8 +9,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-        
+
       - name: Run Black
-        uses: lgeiger/black-action@v1.0.1
-        with:
-          args: '. --check'
+        uses: psf/black@stable
