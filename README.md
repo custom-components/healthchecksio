@@ -32,7 +32,7 @@ This integration will send an update to it every `5` minutes.
 ### API Key
 
 The API key to your account.
-You can find that under the "Settings" tab in your project.
+You can find it under the "Settings" tab in your project.
 This should **not** be the "Read only" key.
 
 ## For self-hosted instances
