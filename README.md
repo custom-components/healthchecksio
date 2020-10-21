@@ -17,23 +17,23 @@ _Integration to integrate with [healthchecks.io][healthchecksio]._
 
 ## Installation
 
-1. Search for and install `healthchecksio` from [HACS](https://hacs.xyz/)
+Search for and install `healthchecksio` from [HACS](https://hacs.xyz/)
 
 ## Configuration
 
-This can **only** be configured in the UI.
+This integration can **only** be configured via the UI.
 
 ### Check ID
 
-This is the ID of the check that this integration should update, this ID looks something like `aa247c51-8da8-4800-86a3-48763142e902`
+This is the ID of the check that the integration should update, this ID looks something like `aa247c51-8da8-4800-86a3-48763142e902`
 
-This integration will send an update to it every `5` minuttes.
+This integration will send an update to it every `5` minutes.
 
 ### API Key
 
 The API key to your account.
-You find that under the "Settings" tab in your project.
-This can **not** be the "Read only" key.
+You can find that under the "Settings" tab in your project.
+This should **not** be the "Read only" key.
 
 ## For self-hosted instances
 
