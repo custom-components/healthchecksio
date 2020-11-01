@@ -2,7 +2,9 @@
 try:
     from homeassistant.components.binary_sensor import BinarySensorEntity
 except ImportError:
-    from homeassistant.components.binary_sensor import BinarySensorDevice as BinarySensorEntity
+    from homeassistant.components.binary_sensor import (
+        BinarySensorDevice as BinarySensorEntity,
+    )
 
 from .const import ATTRIBUTION, BINARY_SENSOR_DEVICE_CLASS, DOMAIN_DATA, DOMAIN
 
