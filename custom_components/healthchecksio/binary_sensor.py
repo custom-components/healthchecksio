@@ -14,7 +14,7 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
     # Send update "signal" to the component
     await hass.data[DOMAIN_DATA]["client"].update_data()
     checks = []
-    for check in hass.data[DOMAIN_DATA]["data"].get("checks", []):
+    for check in hass.data[DOMAIN_DATA].get("data", {}).get("checks", []):
         check_data = {
             "name": check.get("name"),
             "last_ping": check.get("last_ping"),
