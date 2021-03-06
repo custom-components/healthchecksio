@@ -22,9 +22,8 @@ from .const import (
     DOMAIN_DATA,
     DOMAIN,
     ISSUE_URL,
-    PLATFORMS,
     REQUIRED_FILES,
-    VERSION,
+    INTEGRATION_VERSION,
     OFFICIAL_SITE_ROOT,
 )
 
@@ -45,7 +44,9 @@ async def async_setup_entry(hass, config_entry):
     """Set up this integration using UI."""
     # Print startup message
     Logger("custom_components.healthchecksio").info(
-        CC_STARTUP_VERSION.format(name=DOMAIN, version=VERSION, issue_link=ISSUE_URL)
+        CC_STARTUP_VERSION.format(
+            name=DOMAIN, version=INTEGRATION_VERSION, issue_link=ISSUE_URL
+        )
     )
 
     # Check that all required files are present

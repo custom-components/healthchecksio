@@ -1,14 +1,20 @@
 name: Lint
 
-on: [push, pull_request]
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
 
 jobs:
   black:
     name: Black
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: 📥 Checkout the repository
         uses: actions/checkout@v2
 
-      - name: Run Black
+      - name: ⬛ Run Black
         uses: psf/black@stable
