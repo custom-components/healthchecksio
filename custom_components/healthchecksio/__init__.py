@@ -101,7 +101,7 @@ class HealthchecksioData:
             verify_ssl = not self.self_hosted or self.site_root.startswith("https")
             session = async_get_clientsession(self.hass, verify_ssl)
             headers = {"X-Api-Key": self.api_key}
-            async with async_timeout.timeout(10, loop=asyncio.get_event_loop()):
+            async with async_timeout.timeout(10):
                 data = await session.get(
                     f"{self.site_root}/api/v1/checks/", headers=headers
                 )
