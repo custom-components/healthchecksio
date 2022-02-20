@@ -28,12 +28,13 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
 class HealthchecksioBinarySensor(BinarySensorEntity):
     """Healthchecksio binary_sensor class."""
 
-    def __init__(self, hass, config, config_entry):
+    def __init__(self, hass, check_data, config_entry):
         self.hass = hass
         self.attr = {}
         self.config_entry = config_entry
         self._status = None
-        self.config = config
+        self.check_data = check_data
+        self.check = {}
 
     async def async_update(self):
         """Update the binary_sensor."""
@@ -41,20 +42,20 @@ class HealthchecksioBinarySensor(BinarySensorEntity):
         await self.hass.data[DOMAIN_DATA]["client"].update_data()
 
         # Check the data and update the value.
-        for check in self.hass.data[DOMAIN_DATA]["data"]["checks"]:
+        for check in self.hass.data[DOMAIN_DATA].get("data", {}).get("checks", []):
             if self.unique_id == check.get("ping_url").split("/")[-1]:
-                self.config = check
+                self.check = check
                 break
-        self._status = self.config.get("status") == "up"
+        self._status = self.check.get("status") == "up"
 
         # Set/update attributes
         self.attr["attribution"] = ATTRIBUTION
-        self.attr["last_ping"] = self.config.get("last_ping")
+        self.attr["last_ping"] = self.check.get("last_ping")
 
     @property
     def unique_id(self):
         """Return a unique ID to use for this binary_sensor."""
-        return self.config.get("ping_url").split("/")[-1]
+        return self.check_data.get("ping_url", "").split("/")[-1]
 
     @property
     def device_info(self):
@@ -67,7 +68,7 @@ class HealthchecksioBinarySensor(BinarySensorEntity):
     @property
     def name(self):
         """Return the name of the binary_sensor."""
-        return self.config.get("name")
+        return self.check.get("name")
 
     @property
     def device_class(self):

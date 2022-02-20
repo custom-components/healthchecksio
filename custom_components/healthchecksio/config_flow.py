@@ -127,7 +127,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             verify_ssl = not self_hosted or site_root.startswith("https")
             session = async_get_clientsession(self.hass, verify_ssl)
             headers = {"X-Api-Key": api_key}
-            async with async_timeout.timeout(10, loop=asyncio.get_event_loop()):
+            async with async_timeout.timeout(10):
                 Logger("custom_components.healthchecksio").info("Checking API Key")
                 data = await session.get(f"{site_root}/api/v1/checks/", headers=headers)
                 self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
