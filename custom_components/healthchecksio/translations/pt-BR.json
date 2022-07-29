@@ -1,0 +1,30 @@
+{
+    "config": {
+        "title": "Healthchecks.io",
+        "step": {
+            "user": {
+                "title": "Healthchecks.io",
+                "description": "Se precisar de ajuda com a configuração, dê uma olhada aqui: https://github.com/custom-components/healthchecksio",
+                "data": {
+                    "api_key": "Chave de API",
+                    "check": "Verificar ID",
+                    "self_hosted": "Usar instância auto-hospedada"
+                }
+            },
+            "self_hosted": {
+                "title": "Healthchecks.io instância auto-hospedada",
+                "description": "Se precisar de ajuda com a configuração, dê uma olhada aqui https://github.com/custom-components/healthchecksio",
+                "data": {
+                    "site_root": "URL raiz da instância",
+                    "ping_endpoint": "Ponto de extremidade do ping"
+                }
+            }
+        },
+        "error": {
+            "auth": "Chave de API, Verificar ID, raiz do site ou o ponto de extremidade do ping estão errados."
+        },
+        "abort": {
+            "single_instance_allowed": "Only a single configuration of Blueprint is allowed."
+        }
+    }
+}
