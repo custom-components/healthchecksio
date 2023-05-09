@@ -46,7 +46,7 @@ class HealthchecksioBinarySensor(BinarySensorEntity):
             if self.unique_id == check.get("ping_url").split("/")[-1]:
                 self.check = check
                 break
-        self._status = self.check.get("status") == "up"
+        self._status = self.check.get("status") != "down"
 
         # Set/update attributes
         self.attr["attribution"] = ATTRIBUTION
