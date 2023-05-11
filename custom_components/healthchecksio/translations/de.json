@@ -12,7 +12,8 @@
         }
       },
       "self_hosted": {
-        "title": "Selbstgehostete Instanz von Healthchecks.io"
+        "title": "Selbstgehostete Instanz von Healthchecks.io",
+        "description": "Wenn Sie Hilfe bei der Konfiguration benötigen, schauen Sie hier vorbei: https://github.com/custom-components/healthchecksio"
       }
     }
   }
