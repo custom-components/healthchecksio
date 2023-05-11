@@ -10,6 +10,9 @@
           "check": "Ausweis prüfen",
           "self_hosted": "Verwenden Sie eine selbst gehostete Instanz"
         }
+      },
+      "self_hosted": {
+        "title": "Selbstgehostete Instanz von Healthchecks.io"
       }
     }
   }
