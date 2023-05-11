@@ -19,6 +19,9 @@
           "ping_endpoint": "Ping-Endpunkt"
         }
       }
+    },
+    "error": {
+      "auth": "API-Schlüssel, Check-ID, Site-Root oder Ping-Endpunkt sind falsch."
     }
   }
 }
