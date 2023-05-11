@@ -7,7 +7,8 @@
         "description": "Wenn Sie Hilfe bei der Konfiguration benötigen, schauen Sie hier vorbei: https://github.com/custom-components/healthchecksio",
         "data": {
           "api_key": "API-Schlüssel",
-          "check": "Ausweis prüfen"
+          "check": "Ausweis prüfen",
+          "self_hosted": "Verwenden Sie eine selbst gehostete Instanz"
         }
       }
     }
