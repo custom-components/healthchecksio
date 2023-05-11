@@ -1,5 +1,10 @@
 {
   "config": {
-    "title": "Healthchecks.io"
+    "title": "Healthchecks.io",
+    "step": {
+      "user": {
+        "title": "Healthchecks.io"
+      }
+    }
   }
 }
