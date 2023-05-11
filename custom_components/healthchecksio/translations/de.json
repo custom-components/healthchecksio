@@ -22,6 +22,9 @@
     },
     "error": {
       "auth": "API-Schlüssel, Check-ID, Site-Root oder Ping-Endpunkt sind falsch."
+    },
+    "abort": {
+      "single_instance_allowed": "Es ist nur eine einzelne Konfiguration von Blueprint zulässig."
     }
   }
 }
