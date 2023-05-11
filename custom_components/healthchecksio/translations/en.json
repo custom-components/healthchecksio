@@ -1,30 +1,30 @@
 {
-    "config": {
+  "config": {
+    "title": "Healthchecks.io",
+    "step": {
+      "user": {
         "title": "Healthchecks.io",
-        "step": {
-            "user": {
-                "title": "Healthchecks.io",
-                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
-                "data": {
-                    "api_key": "API key",
-                    "check": "Check ID",
-                    "self_hosted": "Use self-hosted instance"
-                }
-            },
-            "self_hosted": {
-                "title": "Healthchecks.io self-hosted instance",
-                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
-                "data": {
-                    "site_root": "Instance root URL",
-                    "ping_endpoint": "Ping endpoint"
-                }
-            }
-        },
-        "error": {
-            "auth": "API Key, Check ID, Site root or Ping endpoint is wrong."
-        },
-        "abort": {
-            "single_instance_allowed": "Only a single configuration of Blueprint is allowed."
+        "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
+        "data": {
+          "api_key": "API key",
+          "check": "Check ID",
+          "self_hosted": "Use self-hosted instance"
         }
+      },
+      "self_hosted": {
+        "title": "Healthchecks.io self-hosted instance",
+        "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
+        "data": {
+          "site_root": "Instance root URL",
+          "ping_endpoint": "Ping endpoint"
+        }
+      }
+    },
+    "error": {
+      "auth": "API Key, Check ID, Site root or Ping endpoint is wrong."
+    },
+    "abort": {
+      "single_instance_allowed": "Only a single configuration of Blueprint is allowed."
     }
+  }
 }
