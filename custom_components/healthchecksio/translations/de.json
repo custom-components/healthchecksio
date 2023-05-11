@@ -15,7 +15,8 @@
         "title": "Selbstgehostete Instanz von Healthchecks.io",
         "description": "Wenn Sie Hilfe bei der Konfiguration benötigen, schauen Sie hier vorbei: https://github.com/custom-components/healthchecksio",
         "data": {
-          "site_root": "Stamm-URL der Instanz"
+          "site_root": "Stamm-URL der Instanz",
+          "ping_endpoint": "Ping-Endpunkt"
         }
       }
     }
