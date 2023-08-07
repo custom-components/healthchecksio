@@ -4,33 +4,32 @@ Integration to integrate with healthchecks.io
 For more details about this component, please refer to
 https://github.com/custom-components/healthchecksio
 """
-import os
-import async_timeout
 import asyncio
+import os
 from datetime import timedelta
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-import voluptuous as vol
-from homeassistant import config_entries
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers import discovery
-from homeassistant.util import Throttle
 
-from integrationhelper.const import CC_STARTUP_VERSION
+import async_timeout
+from homeassistant import config_entries, core
+from homeassistant.const import Platform
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import Throttle
 from integrationhelper import Logger
+from integrationhelper.const import CC_STARTUP_VERSION
 
 from .const import (
-    DOMAIN_DATA,
     DOMAIN,
-    ISSUE_URL,
-    REQUIRED_FILES,
+    DOMAIN_DATA,
     INTEGRATION_VERSION,
+    ISSUE_URL,
     OFFICIAL_SITE_ROOT,
+    REQUIRED_FILES,
 )
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 
 
-async def async_setup(hass, config):
+async def async_setup(hass: core.HomeAssistant, config: ConfigType):
     """Set up this component using YAML is not supported."""
     if config.get(DOMAIN) is not None:
         Logger("custom_components.healthchecksio").error(
@@ -40,7 +39,9 @@ async def async_setup(hass, config):
     return True
 
 
-async def async_setup_entry(hass, config_entry):
+async def async_setup_entry(
+    hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
+) -> bool:
     """Set up this integration using UI."""
     # Print startup message
     Logger("custom_components.healthchecksio").info(
@@ -74,10 +75,29 @@ async def async_setup_entry(hass, config_entry):
 
     # Add binary_sensor
     hass.async_add_job(
-        hass.config_entries.async_forward_entry_setup(config_entry, "binary_sensor")
+        hass.config_entries.async_forward_entry_setup(
+            config_entry, Platform.BINARY_SENSOR
+        )
     )
 
     return True
+
+
+async def async_unload_entry(
+    hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
+) -> bool:
+    """Unload a config entry."""
+
+    unload_ok = await hass.config_entries.async_forward_entry_unload(
+        config_entry, Platform.BINARY_SENSOR
+    )
+    if unload_ok:
+        hass.data[DOMAIN_DATA].pop("client", None)
+        hass.data[DOMAIN_DATA].pop("data", None)
+        Logger("custom_components.healthchecksio").info(
+            "Successfully removed the healthchecksio integration"
+        )
+    return unload_ok
 
 
 class HealthchecksioData:
@@ -119,7 +139,7 @@ class HealthchecksioData:
             )
 
 
-async def check_files(hass):
+async def check_files(hass: core.HomeAssistant) -> bool:
     """Return bool that indicates if all files are present."""
     # Verify that the user downloaded all files.
     base = f"{hass.config.path()}/custom_components/{DOMAIN}/"
@@ -138,11 +158,3 @@ async def check_files(hass):
         returnvalue = True
 
     return returnvalue
-
-
-async def async_remove_entry(hass, config_entry):
-    """Handle removal of an entry."""
-    await hass.config_entries.async_forward_entry_unload(config_entry, "binary_sensor")
-    Logger("custom_components.healthchecksio").info(
-        "Successfully removed the healthchecksio integration"
-    )
