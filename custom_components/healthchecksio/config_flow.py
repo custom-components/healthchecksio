@@ -1,11 +1,13 @@
 """Adds config flow for Blueprint."""
-import async_timeout
 import asyncio
+import json
 from collections import OrderedDict
+
+import aiohttp
 import voluptuous as vol
+from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from integrationhelper import Logger
-from homeassistant import config_entries
 
 from .const import DOMAIN, DOMAIN_DATA, OFFICIAL_SITE_ROOT
 
@@ -123,23 +125,58 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         self, api_key, check, self_hosted, site_root, ping_endpoint
     ):
         """Return true if credentials is valid."""
+        Logger("custom_components.healthchecksio").debug("Testing Credentials")
+        verify_ssl = not self_hosted or site_root.startswith("https")
+        session = async_get_clientsession(self.hass, verify_ssl)
+        timeout10 = aiohttp.ClientTimeout(total=10)
+        headers = {"X-Api-Key": api_key}
+        if self_hosted:
+            check_url = f"{site_root}/{ping_endpoint}/{check}"
+        else:
+            check_url = f"https://hc-ping.com/{check}"
+        await asyncio.sleep(1)  # needed for self-hosted instances
         try:
-            verify_ssl = not self_hosted or site_root.startswith("https")
-            session = async_get_clientsession(self.hass, verify_ssl)
-            headers = {"X-Api-Key": api_key}
-            async with async_timeout.timeout(10):
-                Logger("custom_components.healthchecksio").info("Checking API Key")
-                data = await session.get(f"{site_root}/api/v1/checks/", headers=headers)
+            check_response = await session.get(check_url, timeout=timeout10)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            Logger("custom_components.healthchecksio").error(
+                f"Could Not Send Check: {error}"
+            )
+            return False
+        else:
+            if check_response.ok:
+                Logger("custom_components.healthchecksio").debug(
+                    f"Send Check HTTP Status Code: {check_response.status}"
+                )
+            else:
+                Logger("custom_components.healthchecksio").error(
+                    f"Error: Send Check HTTP Status Code: {check_response.status}"
+                )
+                return False
+        try:
+            async with session.get(
+                f"{site_root}/api/v1/checks/",
+                headers=headers,
+                timeout=timeout10,
+            ) as data:
                 self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
-
-                Logger("custom_components.healthchecksio").info("Checking Check ID")
-                if self_hosted:
-                    check_url = f"{site_root}/{ping_endpoint}/{check}"
-                else:
-                    check_url = f"https://hc-ping.com/{check}"
-                await asyncio.sleep(1)  # needed for self-hosted instances
-                await session.get(check_url)
-            return True
-        except Exception as exception:  # pylint: disable=broad-except
-            Logger("custom_components.healthchecksio").error(exception)
-        return False
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            Logger("custom_components.healthchecksio").error(
+                f"Could Not Update Data: {error}"
+            )
+            return False
+        except (ValueError, json.decoder.JSONDecodeError) as error:
+            Logger("custom_components.healthchecksio").error(
+                f"Data JSON Decode Error: {error}"
+            )
+            return False
+        else:
+            if data.ok:
+                Logger("custom_components.healthchecksio").debug(
+                    f"Get Data HTTP Status Code: {data.status}"
+                )
+                return True
+            else:
+                Logger("custom_components.healthchecksio").error(
+                    f"Error: Get Data HTTP Status Code: {data.status}"
+                )
+                return False

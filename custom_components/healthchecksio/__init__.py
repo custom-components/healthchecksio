@@ -5,10 +5,11 @@ For more details about this component, please refer to
 https://github.com/custom-components/healthchecksio
 """
 import asyncio
+import json
 import os
 from datetime import timedelta
 
-import async_timeout
+import aiohttp
 from homeassistant import config_entries, core
 from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -115,28 +116,56 @@ class HealthchecksioData:
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update_data(self):
         """Update data."""
-        Logger("custom_components.healthchecksio").debug("Running update")
+        Logger("custom_components.healthchecksio").debug("Running Update")
         # This is where the main logic to update platform data goes.
+        verify_ssl = not self.self_hosted or self.site_root.startswith("https")
+        session = async_get_clientsession(self.hass, verify_ssl)
+        timeout10 = aiohttp.ClientTimeout(total=10)
+        headers = {"X-Api-Key": self.api_key}
+        if self.self_hosted:
+            check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
+        else:
+            check_url = f"https://hc-ping.com/{self.check}"
+        await asyncio.sleep(1)  # needed for self-hosted instances
         try:
-            verify_ssl = not self.self_hosted or self.site_root.startswith("https")
-            session = async_get_clientsession(self.hass, verify_ssl)
-            headers = {"X-Api-Key": self.api_key}
-            async with async_timeout.timeout(10):
-                data = await session.get(
-                    f"{self.site_root}/api/v1/checks/", headers=headers
-                )
-                self.hass.data[DOMAIN_DATA]["data"] = await data.json()
-
-                if self.self_hosted:
-                    check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
-                else:
-                    check_url = f"https://hc-ping.com/{self.check}"
-                await asyncio.sleep(1)  # needed for self-hosted instances
-                await session.get(check_url)
-        except Exception as error:  # pylint: disable=broad-except
+            check_response = await session.get(check_url, timeout=timeout10)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
             Logger("custom_components.healthchecksio").error(
-                f"Could not update data - {error}"
+                f"Could Not Send Check: {error}"
             )
+        else:
+            if check_response.ok:
+                Logger("custom_components.healthchecksio").debug(
+                    f"Send Check HTTP Status Code: {check_response.status}"
+                )
+            else:
+                Logger("custom_components.healthchecksio").error(
+                    f"Error: Send Check HTTP Status Code: {check_response.status}"
+                )
+        try:
+            async with session.get(
+                f"{self.site_root}/api/v1/checks/",
+                headers=headers,
+                timeout=timeout10,
+            ) as data:
+                self.hass.data[DOMAIN_DATA]["data"] = await data.json()
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            Logger("custom_components.healthchecksio").error(
+                f"Could Not Update Data: {error}"
+            )
+        except (ValueError, json.decoder.JSONDecodeError) as error:
+            Logger("custom_components.healthchecksio").error(
+                f"Data JSON Decode Error: {error}"
+            )
+        else:
+            if data.ok:
+                Logger("custom_components.healthchecksio").debug(
+                    f"Get Data HTTP Status Code: {data.status}"
+                )
+            else:
+                Logger("custom_components.healthchecksio").error(
+                    f"Error: Get Data HTTP Status Code: {data.status}"
+                )
 
 
 async def check_files(hass: core.HomeAssistant) -> bool:
