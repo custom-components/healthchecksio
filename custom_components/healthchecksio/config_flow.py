@@ -74,7 +74,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
 
         data_schema = OrderedDict()
         data_schema[vol.Required("api_key", default=api_key)] = str
-        data_schema[vol.Required("check", default=check)] = str
+        data_schema[vol.Optional("check", default=check)] = str
         data_schema[vol.Required("self_hosted", default=self_hosted)] = bool
         return self.async_show_form(
             step_id="user", data_schema=vol.Schema(data_schema), errors=self._errors
@@ -130,28 +130,33 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         session = async_get_clientsession(self.hass, verify_ssl)
         timeout10 = aiohttp.ClientTimeout(total=10)
         headers = {"X-Api-Key": self.api_key}
-        if self.self_hosted:
-            check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
-        else:
-            check_url = f"https://hc-ping.com/{self.check}"
-        await asyncio.sleep(1)  # needed for self-hosted instances
-        try:
-            check_response = await session.get(check_url, timeout=timeout10)
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            Logger("custom_components.healthchecksio").error(
-                f"Could Not Send Check: {error}"
-            )
-            return False
-        else:
-            if check_response.ok:
-                Logger("custom_components.healthchecksio").debug(
-                    f"Send Check HTTP Status Code: {check_response.status}"
-                )
+        if self.check is not None:
+            if self.self_hosted:
+                check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
             else:
+                check_url = f"https://hc-ping.com/{self.check}"
+            await asyncio.sleep(1)  # needed for self-hosted instances
+            try:
+                check_response = await session.get(check_url, timeout=timeout10)
+            except (aiohttp.ClientError, asyncio.TimeoutError) as error:
                 Logger("custom_components.healthchecksio").error(
-                    f"Error: Send Check HTTP Status Code: {check_response.status}"
+                    f"Could Not Send Check: {error}"
                 )
                 return False
+            else:
+                if check_response.ok:
+                    Logger("custom_components.healthchecksio").debug(
+                        f"Send Check HTTP Status Code: {check_response.status}"
+                    )
+                else:
+                    Logger("custom_components.healthchecksio").error(
+                        f"Error: Send Check HTTP Status Code: {check_response.status}"
+                    )
+                    return False
+        else:
+            Logger("custom_components.healthchecksio").debug(
+                "Send Check is not defined."
+            )
         try:
             async with session.get(
                 f"{self.site_root}/api/v1/checks/",

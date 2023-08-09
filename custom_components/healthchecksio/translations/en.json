@@ -24,7 +24,7 @@
             "auth": "API Key, Check ID, Site root or Ping endpoint is wrong."
         },
         "abort": {
-            "single_instance_allowed": "Only a single configuration of Blueprint is allowed."
+            "single_instance_allowed": "Only a single configuration of Healthchecks.io is allowed."
         }
     }
 }

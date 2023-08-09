@@ -98,26 +98,31 @@ class HealthchecksioData:
         session = async_get_clientsession(self.hass, verify_ssl)
         timeout10 = aiohttp.ClientTimeout(total=10)
         headers = {"X-Api-Key": self.api_key}
-        if self.self_hosted:
-            check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
-        else:
-            check_url = f"https://hc-ping.com/{self.check}"
-        await asyncio.sleep(1)  # needed for self-hosted instances
-        try:
-            check_response = await session.get(check_url, timeout=timeout10)
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            Logger("custom_components.healthchecksio").error(
-                f"Could Not Send Check: {error}"
-            )
-        else:
-            if check_response.ok:
-                Logger("custom_components.healthchecksio").debug(
-                    f"Send Check HTTP Status Code: {check_response.status}"
+        if self.check is not None:
+            if self.self_hosted:
+                check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
+            else:
+                check_url = f"https://hc-ping.com/{self.check}"
+            await asyncio.sleep(1)  # needed for self-hosted instances
+            try:
+                check_response = await session.get(check_url, timeout=timeout10)
+            except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+                Logger("custom_components.healthchecksio").error(
+                    f"Could Not Send Check: {error}"
                 )
             else:
-                Logger("custom_components.healthchecksio").error(
-                    f"Error: Send Check HTTP Status Code: {check_response.status}"
-                )
+                if check_response.ok:
+                    Logger("custom_components.healthchecksio").debug(
+                        f"Send Check HTTP Status Code: {check_response.status}"
+                    )
+                else:
+                    Logger("custom_components.healthchecksio").error(
+                        f"Error: Send Check HTTP Status Code: {check_response.status}"
+                    )
+        else:
+            Logger("custom_components.healthchecksio").debug(
+                "Send Check is not defined."
+            )
         try:
             async with session.get(
                 f"{self.site_root}/api/v1/checks/",
