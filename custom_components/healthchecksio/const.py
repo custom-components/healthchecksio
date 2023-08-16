@@ -20,25 +20,31 @@ ATTRIBUTION = "Data from this is provided by HealthChecks.io."
 OFFICIAL_SITE_ROOT = "https://healthchecks.io"
 
 ATTR_ATTRIBUTION = "attribution"
-ATTR_NAME = "name"
-ATTR_LAST_PING = "last_ping"
-ATTR_STATUS = "status"
-ATTR_PING_URL = "ping_url"
 ATTR_CHECKS = "checks"
+ATTR_LAST_PING = "last_ping"
+ATTR_NAME = "name"
+ATTR_PING_URL = "ping_url"
+ATTR_STATUS = "status"
 
 CONF_API_KEY = "api_key"
 CONF_CHECK = "check"
+CONF_CREATE_BINARY_SENSOR = "create_binary_sensor"
+CONF_CREATE_SENSOR = "create_sensor"
 CONF_PING_ENDPOINT = "ping_endpoint"
 CONF_SELF_HOSTED = "self_hosted"
 CONF_SITE_ROOT = "site_root"
-CONF_CREATE_SENSOR = "create_sensor"
-CONF_CREATE_BINARY_SENSOR = "create_binary_sensor"
 
 DATA_CLIENT = "client"
 DATA_DATA = "data"
 
+DEFAULT_CREATE_BINARY_SENSOR = True
+DEFAULT_CREATE_SENSOR = False
 DEFAULT_PING_ENDPOINT = "ping"
 DEFAULT_SELF_HOSTED = False
 DEFAULT_SITE_ROOT = "https://checks.mydomain.com"
-DEFAULT_CREATE_BINARY_SENSOR = True
-DEFAULT_CREATE_SENSOR = False
+
+ICON_DEFAULT = "mdi:cloud"
+ICON_DOWN = "mdi:cloud-off"
+ICON_GRACE = "mdi:cloud-alert"
+ICON_PAUSED = "mdi:cloud-question"
+ICON_UP = "mdi:cloud-check-variant"

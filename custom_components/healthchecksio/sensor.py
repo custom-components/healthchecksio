@@ -15,6 +15,11 @@ from .const import (
     DATA_DATA,
     DOMAIN,
     DOMAIN_DATA,
+    ICON_DEFAULT,
+    ICON_DOWN,
+    ICON_GRACE,
+    ICON_PAUSED,
+    ICON_UP,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -46,6 +51,7 @@ class HealthchecksioSensor(SensorEntity):
         self._attr_unique_id = self.check_data.get(ATTR_PING_URL, "").split("/")[-1]
         self._attr_extra_state_attributes = {}
         self._attr_native_value = None
+        self._attr_icon = ICON_DEFAULT
         self.check = {}
 
     async def async_update(self):
@@ -60,7 +66,21 @@ class HealthchecksioSensor(SensorEntity):
         self._attr_name = self.check.get(ATTR_NAME)
         self._attr_native_value = self.check.get(ATTR_STATUS)
         if isinstance(self._attr_native_value, str):
+            if self._attr_native_value.lower() == "new":
+                self._attr_icon = ICON_DEFAULT
+            elif self._attr_native_value.lower() == "up":
+                self._attr_icon = ICON_UP
+            elif self._attr_native_value.lower() == "grace":
+                self._attr_icon = ICON_GRACE
+            elif self._attr_native_value.lower() == "down":
+                self._attr_icon = ICON_DOWN
+            elif self._attr_native_value.lower() == "paused":
+                self._attr_icon = ICON_PAUSED
+            else:
+                self._attr_icon = ICON_DEFAULT
             self._attr_native_value = self._attr_native_value.title()
+        else:
+            self._attr_icon = ICON_DEFAULT
         self._attr_extra_state_attributes[ATTR_ATTRIBUTION] = ATTRIBUTION
         self._attr_extra_state_attributes[ATTR_LAST_PING] = self.check.get(
             ATTR_LAST_PING
