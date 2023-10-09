@@ -64,12 +64,10 @@ async def _test_credentials(
     else:
         _LOGGER.debug("Send Check is not defined")
     try:
-        async with session.get(
-            f"{site_root}/api/v1/checks/",
-            headers=headers,
-            timeout=timeout10,
-        ) as data:
-            hass.data[DOMAIN_DATA] = {"data": await data.json()}
+        data = await session.get(
+            f"{site_root}/api/v1/checks/", headers=headers, timeout=timeout10
+        )
+        hass.data[DOMAIN_DATA] = {"data": await data.json()}
     except (aiohttp.ClientError, asyncio.TimeoutError) as error:
         _LOGGER.error(f"Could Not Update Data: {error}")
         return False
@@ -77,12 +75,11 @@ async def _test_credentials(
         _LOGGER.error(f"Data JSON Decode Error: {error}")
         return False
     else:
-        if data.ok:
-            _LOGGER.debug(f"Get Data HTTP Status Code: {data.status}")
-            return True
-        else:
+        if not data.ok:
             _LOGGER.error(f"Error: Get Data HTTP Status Code: {data.status}")
             return False
+        _LOGGER.debug(f"Get Data HTTP Status Code: {data.status}")
+        return True
 
 
 class HealchecksioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

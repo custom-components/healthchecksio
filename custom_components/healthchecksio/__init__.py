@@ -116,8 +116,7 @@ async def async_unload_entry(
             curr_plat,
         )
     if unload_ok:
-        hass.data[DOMAIN_DATA].pop(DATA_CLIENT, None)
-        hass.data[DOMAIN_DATA].pop(DATA_DATA, None)
+        hass.data.pop(DOMAIN_DATA, None)
         _LOGGER.info("Successfully removed the HealthChecks.io integration")
 
     return unload_ok
@@ -166,12 +165,10 @@ class HealthchecksioData:
         else:
             _LOGGER.debug("Send Check is not defined")
         try:
-            async with session.get(
-                f"{self.site_root}/api/v1/checks/",
-                headers=headers,
-                timeout=timeout10,
-            ) as data:
-                self.hass.data[DOMAIN_DATA][DATA_DATA] = await data.json()
+            data = await session.get(
+                f"{self.site_root}/api/v1/checks/", headers=headers, timeout=timeout10
+            )
+            self.hass.data[DOMAIN_DATA][DATA_DATA] = await data.json()
         except (aiohttp.ClientError, asyncio.TimeoutError) as error:
             _LOGGER.error(f"Could Not Update Data: {error}")
         except (ValueError, json.decoder.JSONDecodeError) as error:
