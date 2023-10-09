@@ -193,5 +193,4 @@ async def check_files(hass: core.HomeAssistant) -> bool:
     if missing:
         _LOGGER.critical(f"The following files are missing: {missing}")
         return False
-    else:
-        return True
+    return True
