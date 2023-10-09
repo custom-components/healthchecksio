@@ -24,9 +24,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         self._errors = {}
         self.initial_data = None
 
-    async def async_step_user(
-        self, user_input={}
-    ):  # pylint: disable=dangerous-default-value
+    async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
         self._errors = {}
         if self._async_current_entries():
@@ -80,9 +78,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             step_id="user", data_schema=vol.Schema(data_schema), errors=self._errors
         )
 
-    async def async_step_self_hosted(
-        self, user_input={}
-    ):  # pylint: disable=dangerous-default-value
+    async def async_step_self_hosted(self, user_input):
         """Handle the step for a self-hosted instance."""
         self._errors = {}
         valid = await self._test_credentials(
