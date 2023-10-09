@@ -27,7 +27,7 @@ from .const import (
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 
 
-async def async_setup(hass, config):
+async def async_setup(hass: core.HomeAssistant, config: ConfigType):
     """Set up this component using YAML is not supported."""
     if config.get(DOMAIN) is not None:
         Logger("custom_components.healthchecksio").error(
@@ -37,7 +37,9 @@ async def async_setup(hass, config):
     return True
 
 
-async def async_setup_entry(hass, config_entry):
+async def async_setup_entry(
+    hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
+) -> bool:
     """Set up this integration using UI."""
     # Print startup message
     Logger("custom_components.healthchecksio").info(
@@ -71,10 +73,28 @@ async def async_setup_entry(hass, config_entry):
 
     # Add binary_sensor
     hass.async_add_job(
-        hass.config_entries.async_forward_entry_setup(config_entry, "binary_sensor")
+        hass.config_entries.async_forward_entry_setup(
+            config_entry, Platform.BINARY_SENSOR
+        )
     )
 
     return True
+
+
+async def async_unload_entry(
+    hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
+) -> bool:
+    """Unload a config entry."""
+
+    unload_ok = await hass.config_entries.async_forward_entry_unload(
+        config_entry, Platform.BINARY_SENSOR
+    )
+    if unload_ok:
+        hass.data.pop(DOMAIN_DATA, None)
+        Logger("custom_components.healthchecksio").info(
+            "Successfully removed the healthchecksio integration"
+        )
+    return unload_ok
 
 
 class HealthchecksioData:
@@ -142,7 +162,7 @@ class HealthchecksioData:
                 )
 
 
-async def check_files(hass):
+async def check_files(hass: core.HomeAssistant) -> bool:
     """Return bool that indicates if all files are present."""
     # Verify that the user downloaded all files.
     base = f"{hass.config.path()}/custom_components/{DOMAIN}/"
@@ -161,11 +181,3 @@ async def check_files(hass):
         returnvalue = True
 
     return returnvalue
-
-
-async def async_remove_entry(hass, config_entry):
-    """Handle removal of an entry."""
-    await hass.config_entries.async_forward_entry_unload(config_entry, "binary_sensor")
-    Logger("custom_components.healthchecksio").info(
-        "Successfully removed the healthchecksio integration"
-    )
