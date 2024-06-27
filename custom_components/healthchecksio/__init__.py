@@ -27,6 +27,9 @@ from .const import (
 )
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+]
 
 
 async def async_setup(hass: core.HomeAssistant, config: ConfigType):
@@ -73,13 +76,7 @@ async def async_setup_entry(
         hass, api_key, check, self_hosted, site_root, ping_endpoint
     )
 
-    # Add binary_sensor
-    hass.async_add_job(
-        hass.config_entries.async_forward_entry_setup(
-            config_entry, Platform.BINARY_SENSOR
-        )
-    )
-
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
 
