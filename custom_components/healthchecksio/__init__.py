@@ -85,7 +85,6 @@ async def async_unload_entry(
     hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
 ) -> bool:
     """Unload a config entry."""
-
     unload_ok = await hass.config_entries.async_forward_entry_unload(
         config_entry, Platform.BINARY_SENSOR
     )
@@ -142,7 +141,7 @@ async def check_files(hass: core.HomeAssistant) -> bool:
     base = f"{hass.config.path()}/custom_components/{DOMAIN}/"
     missing = []
     for file in REQUIRED_FILES:
-        fullpath = "{}{}".format(base, file)
+        fullpath = f"{base}{file}"
         if not os.path.exists(fullpath):
             missing.append(file)
 

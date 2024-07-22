@@ -7,7 +7,7 @@ except ImportError:
         BinarySensorDevice as BinarySensorEntity,
     )
 
-from .const import ATTRIBUTION, BINARY_SENSOR_DEVICE_CLASS, DOMAIN_DATA, DOMAIN
+from .const import ATTRIBUTION, BINARY_SENSOR_DEVICE_CLASS, DOMAIN, DOMAIN_DATA
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
