@@ -4,7 +4,6 @@
 DOMAIN = "healthchecksio"
 DOMAIN_DATA = f"{DOMAIN}_data"
 INTEGRATION_VERSION = "main"
-PLATFORMS = ["binary_sensor"]
 
 ISSUE_URL = "https://github.com/custom-components/healthchecksio/issues"
 ATTRIBUTION = "Data from this is provided by healthchecks.io."

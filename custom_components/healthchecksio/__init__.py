@@ -13,11 +13,9 @@ import async_timeout
 from homeassistant import config_entries, core
 from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import Throttle
 
 from .const import (
-    DOMAIN,
     DOMAIN_DATA,
     OFFICIAL_SITE_ROOT,
 )
@@ -30,16 +28,9 @@ PLATFORMS = [
 LOGGER = getLogger(__name__)
 
 
-async def async_setup(hass: core.HomeAssistant, config: ConfigType):
-    """Set up this component using YAML is not supported."""
-    if config.get(DOMAIN) is not None:
-        LOGGER.error("Configuration with YAML is not supported")
-
-    return True
-
-
 async def async_setup_entry(
-    hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
+    hass: core.HomeAssistant,
+    config_entry: config_entries.ConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
     # Create DATA dict
