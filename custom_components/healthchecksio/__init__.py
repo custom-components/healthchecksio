@@ -117,8 +117,8 @@ class HealthchecksioData:
                     check_url = f"https://hc-ping.com/{self.check}"
                 await asyncio.sleep(1)  # needed for self-hosted instances
                 await session.get(check_url)
-        except Exception as error:  # pylint: disable=broad-except
-            LOGGER.error(f"Could not update data - {error}")
+        except Exception:  # pylint: disable=broad-except
+            LOGGER.exception("Could not update data")
 
 
 async def check_files(hass: core.HomeAssistant) -> bool:
@@ -132,7 +132,7 @@ async def check_files(hass: core.HomeAssistant) -> bool:
             missing.append(file)
 
     if missing:
-        LOGGER.critical(f"The following files are missing: {missing}")
+        LOGGER.critical("The following files are missing: %s", missing)
         returnvalue = False
     else:
         returnvalue = True
