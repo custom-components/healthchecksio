@@ -5,13 +5,7 @@ DOMAIN = "healthchecksio"
 DOMAIN_DATA = f"{DOMAIN}_data"
 INTEGRATION_VERSION = "main"
 PLATFORMS = ["binary_sensor"]
-REQUIRED_FILES = [
-    ".translations/en.json",
-    "binary_sensor.py",
-    "const.py",
-    "config_flow.py",
-    "manifest.json",
-]
+
 ISSUE_URL = "https://github.com/custom-components/healthchecksio/issues"
 ATTRIBUTION = "Data from this is provided by healthchecks.io."
 

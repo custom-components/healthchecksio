@@ -6,7 +6,6 @@ https://github.com/custom-components/healthchecksio
 """
 
 import asyncio
-import os
 from datetime import timedelta
 from logging import getLogger
 
@@ -21,7 +20,6 @@ from .const import (
     DOMAIN,
     DOMAIN_DATA,
     OFFICIAL_SITE_ROOT,
-    REQUIRED_FILES,
 )
 
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
