@@ -44,11 +44,6 @@ async def async_setup_entry(
     hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
 ) -> bool:
     """Set up this integration using UI."""
-    # Check that all required files are present
-    file_check = await check_files(hass)
-    if not file_check:
-        return False
-
     # Create DATA dict
     if DOMAIN_DATA not in hass.data:
         hass.data[DOMAIN_DATA] = {}
@@ -119,22 +114,3 @@ class HealthchecksioData:
                 await session.get(check_url)
         except Exception:  # pylint: disable=broad-except
             LOGGER.exception("Could not update data")
-
-
-async def check_files(hass: core.HomeAssistant) -> bool:
-    """Return bool that indicates if all files are present."""
-    # Verify that the user downloaded all files.
-    base = f"{hass.config.path()}/custom_components/{DOMAIN}/"
-    missing = []
-    for file in REQUIRED_FILES:
-        fullpath = f"{base}{file}"
-        if not os.path.exists(fullpath):
-            missing.append(file)
-
-    if missing:
-        LOGGER.critical("The following files are missing: %s", missing)
-        returnvalue = False
-    else:
-        returnvalue = True
-
-    return returnvalue
