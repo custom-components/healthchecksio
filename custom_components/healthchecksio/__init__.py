@@ -59,10 +59,9 @@ async def async_unload_entry(
     hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
 ) -> bool:
     """Unload a config entry."""
-    unload_ok = await hass.config_entries.async_forward_entry_unload(
-        config_entry, Platform.BINARY_SENSOR
-    )
-    if unload_ok:
+    if unload_ok := await hass.config_entries.async_unload_platforms(
+        config_entry, PLATFORMS
+    ):
         hass.data.pop(DOMAIN_DATA, None)
         LOGGER.info("Successfully removed the healthchecksio integration")
     return unload_ok
