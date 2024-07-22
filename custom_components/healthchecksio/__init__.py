@@ -8,7 +8,7 @@ https://github.com/custom-components/healthchecksio
 import asyncio
 import os
 from datetime import timedelta
-from logging import getLogger as Logger
+from logging import getLogger
 
 import async_timeout
 from homeassistant import config_entries, core
@@ -20,8 +20,6 @@ from homeassistant.util import Throttle
 from .const import (
     DOMAIN,
     DOMAIN_DATA,
-    INTEGRATION_VERSION,
-    ISSUE_URL,
     OFFICIAL_SITE_ROOT,
     REQUIRED_FILES,
 )
@@ -31,13 +29,13 @@ PLATFORMS = [
     Platform.BINARY_SENSOR,
 ]
 
+LOGGER = getLogger(__name__)
+
 
 async def async_setup(hass: core.HomeAssistant, config: ConfigType):
     """Set up this component using YAML is not supported."""
     if config.get(DOMAIN) is not None:
-        Logger("custom_components.healthchecksio").error(
-            "Configuration with YAML is not supported"
-        )
+        LOGGER.error("Configuration with YAML is not supported")
 
     return True
 
@@ -82,9 +80,7 @@ async def async_unload_entry(
     )
     if unload_ok:
         hass.data.pop(DOMAIN_DATA, None)
-        Logger("custom_components.healthchecksio").info(
-            "Successfully removed the healthchecksio integration"
-        )
+        LOGGER.info("Successfully removed the healthchecksio integration")
     return unload_ok
 
 
@@ -103,7 +99,7 @@ class HealthchecksioData:
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update_data(self):
         """Update data."""
-        Logger("custom_components.healthchecksio").debug("Running update")
+        LOGGER.debug("Running update")
         # This is where the main logic to update platform data goes.
         try:
             verify_ssl = not self.self_hosted or self.site_root.startswith("https")
@@ -122,9 +118,7 @@ class HealthchecksioData:
                 await asyncio.sleep(1)  # needed for self-hosted instances
                 await session.get(check_url)
         except Exception as error:  # pylint: disable=broad-except
-            Logger("custom_components.healthchecksio").error(
-                f"Could not update data - {error}"
-            )
+            LOGGER.error(f"Could not update data - {error}")
 
 
 async def check_files(hass: core.HomeAssistant) -> bool:
@@ -138,9 +132,7 @@ async def check_files(hass: core.HomeAssistant) -> bool:
             missing.append(file)
 
     if missing:
-        Logger("custom_components.healthchecksio").critical(
-            f"The following files are missing: {missing}"
-        )
+        LOGGER.critical(f"The following files are missing: {missing}")
         returnvalue = False
     else:
         returnvalue = True
