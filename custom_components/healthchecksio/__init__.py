@@ -4,6 +4,7 @@ Integration to integrate with healthchecks.io
 For more details about this component, please refer to
 https://github.com/custom-components/healthchecksio
 """
+
 import asyncio
 import os
 from datetime import timedelta

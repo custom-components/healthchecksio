@@ -1,4 +1,5 @@
 """Constants for blueprint."""
+
 # Base component constants
 DOMAIN = "healthchecksio"
 DOMAIN_DATA = f"{DOMAIN}_data"

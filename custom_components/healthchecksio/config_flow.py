@@ -1,4 +1,5 @@
 """Adds config flow for Blueprint."""
+
 import asyncio
 from collections import OrderedDict
 

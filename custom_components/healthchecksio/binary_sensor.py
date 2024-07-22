@@ -1,4 +1,5 @@
 """Binary sensor platform for Healthchecksio."""
+
 try:
     from homeassistant.components.binary_sensor import BinarySensorEntity
 except ImportError:
