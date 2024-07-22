@@ -8,6 +8,7 @@ https://github.com/custom-components/healthchecksio
 import asyncio
 import os
 from datetime import timedelta
+from logging import getLogger
 
 import async_timeout
 from homeassistant import config_entries, core
@@ -15,14 +16,10 @@ from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import Throttle
-from integrationhelper import Logger
-from integrationhelper.const import CC_STARTUP_VERSION
 
 from .const import (
     DOMAIN,
     DOMAIN_DATA,
-    INTEGRATION_VERSION,
-    ISSUE_URL,
     OFFICIAL_SITE_ROOT,
     REQUIRED_FILES,
 )
@@ -32,13 +29,13 @@ PLATFORMS = [
     Platform.BINARY_SENSOR,
 ]
 
+LOGGER = getLogger(__name__)
+
 
 async def async_setup(hass: core.HomeAssistant, config: ConfigType):
     """Set up this component using YAML is not supported."""
     if config.get(DOMAIN) is not None:
-        Logger("custom_components.healthchecksio").error(
-            "Configuration with YAML is not supported"
-        )
+        LOGGER.error("Configuration with YAML is not supported")
 
     return True
 
@@ -47,13 +44,6 @@ async def async_setup_entry(
     hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
 ) -> bool:
     """Set up this integration using UI."""
-    # Print startup message
-    Logger("custom_components.healthchecksio").info(
-        CC_STARTUP_VERSION.format(
-            name=DOMAIN, version=INTEGRATION_VERSION, issue_link=ISSUE_URL
-        )
-    )
-
     # Check that all required files are present
     file_check = await check_files(hass)
     if not file_check:
@@ -90,9 +80,7 @@ async def async_unload_entry(
     )
     if unload_ok:
         hass.data.pop(DOMAIN_DATA, None)
-        Logger("custom_components.healthchecksio").info(
-            "Successfully removed the healthchecksio integration"
-        )
+        LOGGER.info("Successfully removed the healthchecksio integration")
     return unload_ok
 
 
@@ -111,7 +99,7 @@ class HealthchecksioData:
     @Throttle(MIN_TIME_BETWEEN_UPDATES)
     async def update_data(self):
         """Update data."""
-        Logger("custom_components.healthchecksio").debug("Running update")
+        LOGGER.debug("Running update")
         # This is where the main logic to update platform data goes.
         try:
             verify_ssl = not self.self_hosted or self.site_root.startswith("https")
@@ -129,10 +117,8 @@ class HealthchecksioData:
                     check_url = f"https://hc-ping.com/{self.check}"
                 await asyncio.sleep(1)  # needed for self-hosted instances
                 await session.get(check_url)
-        except Exception as error:  # pylint: disable=broad-except
-            Logger("custom_components.healthchecksio").error(
-                f"Could not update data - {error}"
-            )
+        except Exception:  # pylint: disable=broad-except
+            LOGGER.exception("Could not update data")
 
 
 async def check_files(hass: core.HomeAssistant) -> bool:
@@ -146,9 +132,7 @@ async def check_files(hass: core.HomeAssistant) -> bool:
             missing.append(file)
 
     if missing:
-        Logger("custom_components.healthchecksio").critical(
-            f"The following files are missing: {missing}"
-        )
+        LOGGER.critical("The following files are missing: %s", missing)
         returnvalue = False
     else:
         returnvalue = True
