@@ -76,7 +76,7 @@ async def async_setup_entry(
         hass, api_key, check, self_hosted, site_root, ping_endpoint
     )
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
     return True
 
 
