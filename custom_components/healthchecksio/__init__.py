@@ -8,6 +8,7 @@ https://github.com/custom-components/healthchecksio
 import asyncio
 import os
 from datetime import timedelta
+from logging import getLogger as Logger
 
 import async_timeout
 from homeassistant import config_entries, core
@@ -15,8 +16,6 @@ from homeassistant.const import Platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.util import Throttle
-from integrationhelper import Logger
-from integrationhelper.const import CC_STARTUP_VERSION
 
 from .const import (
     DOMAIN,
@@ -47,13 +46,6 @@ async def async_setup_entry(
     hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
 ) -> bool:
     """Set up this integration using UI."""
-    # Print startup message
-    Logger("custom_components.healthchecksio").info(
-        CC_STARTUP_VERSION.format(
-            name=DOMAIN, version=INTEGRATION_VERSION, issue_link=ISSUE_URL
-        )
-    )
-
     # Check that all required files are present
     file_check = await check_files(hass)
     if not file_check:

@@ -2,14 +2,16 @@
 
 import asyncio
 from collections import OrderedDict
+from logging import getLogger
 
 import async_timeout
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from integrationhelper import Logger
 
 from .const import DOMAIN, DOMAIN_DATA, OFFICIAL_SITE_ROOT
+
+LOGGER = getLogger(__name__)
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -126,11 +128,11 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             session = async_get_clientsession(self.hass, verify_ssl)
             headers = {"X-Api-Key": api_key}
             async with async_timeout.timeout(10):
-                Logger("custom_components.healthchecksio").info("Checking API Key")
+                LOGGER.info("Checking API Key")
                 data = await session.get(f"{site_root}/api/v1/checks/", headers=headers)
                 self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
 
-                Logger("custom_components.healthchecksio").info("Checking Check ID")
+                LOGGER.info("Checking Check ID")
                 if self_hosted:
                     check_url = f"{site_root}/{ping_endpoint}/{check}"
                 else:
@@ -138,6 +140,6 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
                 await asyncio.sleep(1)  # needed for self-hosted instances
                 await session.get(check_url)
             return True
-        except Exception as exception:  # pylint: disable=broad-except
-            Logger("custom_components.healthchecksio").error(exception)
+        except Exception:  # pylint: disable=broad-except
+            LOGGER.exception("Unknown error occurred")
         return False
