@@ -1,16 +1,18 @@
 """Constants for blueprint."""
-# Base component constants
+
+from __future__ import annotations
+
+from datetime import timedelta
+
+from homeassistant.const import Platform
+
 DOMAIN = "healthchecksio"
-DOMAIN_DATA = f"{DOMAIN}_data"
 INTEGRATION_VERSION = "main"
-PLATFORMS = ["binary_sensor"]
-REQUIRED_FILES = [
-    ".translations/en.json",
-    "binary_sensor.py",
-    "const.py",
-    "config_flow.py",
-    "manifest.json",
+MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
 ]
+
 ISSUE_URL = "https://github.com/custom-components/healthchecksio/issues"
 ATTRIBUTION = "Data from this is provided by healthchecks.io."
 

@@ -1,15 +1,20 @@
 """Adds config flow for Blueprint."""
+
+from __future__ import annotations
+
 import asyncio
 import json
 from collections import OrderedDict
+from logging import getLogger
 
 import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from integrationhelper import Logger
 
-from .const import DOMAIN, DOMAIN_DATA, OFFICIAL_SITE_ROOT
+from .const import DOMAIN, OFFICIAL_SITE_ROOT
+
+LOGGER = getLogger(__name__)
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -121,7 +126,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         self, api_key, check, self_hosted, site_root, ping_endpoint
     ):
         """Return true if credentials is valid."""
-        Logger("custom_components.healthchecksio").debug("Testing Credentials")
+        LOGGER.debug("Testing Credentials")
         verify_ssl = not self_hosted or site_root.startswith("https")
         session = async_get_clientsession(self.hass, verify_ssl)
         timeout10 = aiohttp.ClientTimeout(total=10)
@@ -133,43 +138,28 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         await asyncio.sleep(1)  # needed for self-hosted instances
         try:
             check_response = await session.get(check_url, timeout=timeout10)
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            Logger("custom_components.healthchecksio").error(
-                f"Could Not Send Check: {error}"
-            )
+        except (TimeoutError, aiohttp.ClientError):
+            LOGGER.exception("Could Not Send Check")
             return False
         else:
             if check_response.ok:
-                Logger("custom_components.healthchecksio").debug(
-                    f"Send Check HTTP Status Code: {check_response.status}"
-                )
+                LOGGER.debug("Send Check HTTP Status Code: %s", check_response.status)
             else:
-                Logger("custom_components.healthchecksio").error(
-                    f"Error: Send Check HTTP Status Code: {check_response.status}"
-                )
+                LOGGER.error("Send Check HTTP Status Code: %s", check_response.status)
                 return False
         try:
-            data = await session.get(
+            request = await session.get(
                 f"{site_root}/api/v1/checks/", headers=headers, timeout=timeout10
             )
-            self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            Logger("custom_components.healthchecksio").error(
-                f"Could Not Update Data: {error}"
-            )
+        except (TimeoutError, aiohttp.ClientError):
+            LOGGER.exception("Could Not Update Data")
             return False
-        except (ValueError, json.decoder.JSONDecodeError) as error:
-            Logger("custom_components.healthchecksio").error(
-                f"Data JSON Decode Error: {error}"
-            )
+        except (ValueError, json.decoder.JSONDecodeError):
+            LOGGER.exception("Data JSON Decode Error")
             return False
         else:
-            if not data.ok:
-                Logger("custom_components.healthchecksio").error(
-                    f"Error: Get Data HTTP Status Code: {data.status}"
-                )
+            if not request.ok:
+                LOGGER.error("Got Data HTTP Status Code: %s", request.status)
                 return False
-            Logger("custom_components.healthchecksio").debug(
-                f"Get Data HTTP Status Code: {data.status}"
-            )
+            LOGGER.debug("Got Data HTTP Status Code: {data.status}")
             return True
