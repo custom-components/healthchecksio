@@ -1,5 +1,7 @@
 """Adds config flow for Blueprint."""
 
+from __future__ import annotations
+
 import asyncio
 from collections import OrderedDict
 from logging import getLogger
@@ -9,7 +11,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, DOMAIN_DATA, OFFICIAL_SITE_ROOT
+from .const import DOMAIN, OFFICIAL_SITE_ROOT
 
 LOGGER = getLogger(__name__)
 
@@ -129,8 +131,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             headers = {"X-Api-Key": api_key}
             async with async_timeout.timeout(10):
                 LOGGER.info("Checking API Key")
-                data = await session.get(f"{site_root}/api/v1/checks/", headers=headers)
-                self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
+                await session.get(f"{site_root}/api/v1/checks/", headers=headers)
 
                 LOGGER.info("Checking Check ID")
                 if self_hosted:
