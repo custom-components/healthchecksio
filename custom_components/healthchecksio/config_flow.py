@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from collections import OrderedDict
 from logging import getLogger
 
-import async_timeout
+import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -125,22 +126,40 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         self, api_key, check, self_hosted, site_root, ping_endpoint
     ):
         """Return true if credentials is valid."""
+        LOGGER.debug("Testing Credentials")
+        verify_ssl = not self_hosted or site_root.startswith("https")
+        session = async_get_clientsession(self.hass, verify_ssl)
+        timeout10 = aiohttp.ClientTimeout(total=10)
+        headers = {"X-Api-Key": api_key}
+        if self_hosted:
+            check_url = f"{site_root}/{ping_endpoint}/{check}"
+        else:
+            check_url = f"https://hc-ping.com/{check}"
+        await asyncio.sleep(1)  # needed for self-hosted instances
         try:
-            verify_ssl = not self_hosted or site_root.startswith("https")
-            session = async_get_clientsession(self.hass, verify_ssl)
-            headers = {"X-Api-Key": api_key}
-            async with async_timeout.timeout(10):
-                LOGGER.info("Checking API Key")
-                await session.get(f"{site_root}/api/v1/checks/", headers=headers)
-
-                LOGGER.info("Checking Check ID")
-                if self_hosted:
-                    check_url = f"{site_root}/{ping_endpoint}/{check}"
-                else:
-                    check_url = f"https://hc-ping.com/{check}"
-                await asyncio.sleep(1)  # needed for self-hosted instances
-                await session.get(check_url)
+            check_response = await session.get(check_url, timeout=timeout10)
+        except (TimeoutError, aiohttp.ClientError):
+            LOGGER.exception("Could Not Send Check")
+            return False
+        else:
+            if check_response.ok:
+                LOGGER.debug("Send Check HTTP Status Code: %s", check_response.status)
+            else:
+                LOGGER.error("Send Check HTTP Status Code: %s", check_response.status)
+                return False
+        try:
+            request = await session.get(
+                f"{site_root}/api/v1/checks/", headers=headers, timeout=timeout10
+            )
+        except (TimeoutError, aiohttp.ClientError):
+            LOGGER.exception("Could Not Update Data")
+            return False
+        except (ValueError, json.decoder.JSONDecodeError):
+            LOGGER.exception("Data JSON Decode Error")
+            return False
+        else:
+            if not request.ok:
+                LOGGER.error("Got Data HTTP Status Code: %s", request.status)
+                return False
+            LOGGER.debug("Got Data HTTP Status Code: %s", request.status)
             return True
-        except Exception:  # pylint: disable=broad-except
-            LOGGER.exception("Unknown error occurred")
-        return False

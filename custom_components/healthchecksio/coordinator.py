@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from logging import getLogger
 from typing import TYPE_CHECKING, Any
 
@@ -50,22 +49,11 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Update data."""
-        try:
-            data = await self._session.get(
-                f"{self._site_root}/api/v1/checks/",
-                headers={"X-Api-Key": self._api_key},
-                timeout=ClientTimeout(total=10),
-            )
-        except Exception as error:
-            raise UpdateFailed(error) from error
-
         check_url = (
             f"https://hc-ping.com/{self._check_id}"
             if not self._self_hosted
             else f"{self._site_root}/{self._ping_endpoint}/{self._check_id}"
         )
-        if self._self_hosted:
-            await asyncio.sleep(1)  # needed for self-hosted instances
 
         try:
             await self._session.get(
@@ -75,4 +63,12 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
         except Exception:
             LOGGER.exception("Could not ping")
 
-        return await data.json()
+        try:
+            data = await self._session.get(
+                f"{self._site_root}/api/v1/checks/",
+                headers={"X-Api-Key": self._api_key},
+                timeout=ClientTimeout(total=10),
+            )
+            return await data.json()
+        except Exception as error:
+            raise UpdateFailed(error) from error
