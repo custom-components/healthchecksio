@@ -161,5 +161,5 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             if not request.ok:
                 LOGGER.error("Got Data HTTP Status Code: %s", request.status)
                 return False
-            LOGGER.debug("Got Data HTTP Status Code: {data.status}")
+            LOGGER.debug("Got Data HTTP Status Code: %s", request.status)
             return True
