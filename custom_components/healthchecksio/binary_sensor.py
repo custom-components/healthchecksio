@@ -10,8 +10,6 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from custom_components.healthchecksio import LOGGER
-
 from .const import ATTRIBUTION, DOMAIN
 
 if TYPE_CHECKING:
@@ -22,12 +20,12 @@ if TYPE_CHECKING:
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
     """Setup sensor platform."""
-    # Send update "signal" to the component
     coordinator: HealthchecksioDataUpdateCoordinator = config_entry.runtime_data
     async_add_devices(
         HealthchecksioBinarySensor(
             hass=hass,
             ping_url=check.get("ping_url"),
+            unique_key=check.get("unique_key"),
             coordinator=coordinator,
         )
         for check in coordinator.data.get("checks", [])
@@ -47,13 +45,16 @@ class HealthchecksioBinarySensor(BinarySensorEntity, CoordinatorEntity):
         *,
         hass: HomeAssistant,
         coordinator: HealthchecksioDataUpdateCoordinator,
-        ping_url: str,
+        ping_url: str | None = None,
+        unique_key: str | None = None,
     ):
         super().__init__(coordinator)
         self.hass = hass
         self._ping_url = ping_url
+        self._unique_key = unique_key
 
-        self._attr_unique_id = ping_url.split("/")[-1]
+        self._attr_unique_id = ping_url.split("/")[-1] if ping_url else unique_key
+
         self._attr_device_info = {
             "identifiers": {(DOMAIN, self.coordinator.config_entry.entry_id)},
             "name": "Healthchecks.io",
@@ -63,7 +64,9 @@ class HealthchecksioBinarySensor(BinarySensorEntity, CoordinatorEntity):
     def get_check(self) -> dict[str, Any]:
         """Get check data."""
         for check in self.coordinator.data.get("checks", []):
-            if self._ping_url == check.get("ping_url"):
+            if self._ping_url and self._ping_url == check.get("ping_url"):
+                return check
+            if self._unique_key and self._unique_key == check.get("unique_key"):
                 return check
         return {}
 
@@ -77,7 +80,6 @@ class HealthchecksioBinarySensor(BinarySensorEntity, CoordinatorEntity):
     def is_on(self):
         """Return true if the binary_sensor is on."""
         check = self.get_check()
-        LOGGER.debug("Check: %s", check)
         return check.get("status") != "down"
 
     @property
