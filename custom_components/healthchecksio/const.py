@@ -7,7 +7,6 @@ from datetime import timedelta
 from homeassistant.const import Platform
 
 DOMAIN = "healthchecksio"
-INTEGRATION_VERSION = "main"
 MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 PLATFORMS = [
     Platform.BINARY_SENSOR,
