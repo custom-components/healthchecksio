@@ -16,7 +16,7 @@ jobs:
       - name: Get next version
         id: version
         run: |
-            echo "version=$(jq .version -r ./custom_components/healthchecksio/manifest.json)" >> $GITHUB_ENV
+            echo "version=$(jq .version -r ./custom_components/healthchecksio/manifest.json)" >> $GITHUB_OUTPUT
 
       - name: Run Release Drafter
         uses: release-drafter/release-drafter@v6.0.0
