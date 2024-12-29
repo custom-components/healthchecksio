@@ -21,4 +21,4 @@ jobs:
         uses: ludeeus/action-require-labels@1.1.0
         with:
           labels: >-
-              breaking-change, bugfix, dependencies, enhancement, feature, actions, repository
+              breaking-change, bugfix, dependencies, enhancement, feature, actions, repository, refactor
