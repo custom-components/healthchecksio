@@ -1,8 +1,27 @@
 change-template: '- #$NUMBER $TITLE @$AUTHOR'
 sort-direction: ascending
 exclude-labels:
-  - "release-drafter-ignore"
-template: |
-  ## What’s Changed
+  - "actions"
+  - "repository"
+categories:
+  - title: ":boom: Breaking Changes"
+    label: "breaking-change"
 
+  - title: ":bug: Bug Fixes"
+    label: "bugfix"
+
+  - title: ":sparkles: New Features"
+    label: "feature"
+
+  - title: ":zap: Performance"
+    label: "enhancement"
+
+  - title: ":recycle: Refactor"
+    label: "refactor"
+
+  - title: ":arrow_up: Dependency Updates"
+    label: "dependencies"
+    collapse-after: 1
+
+template: |
   $CHANGES
