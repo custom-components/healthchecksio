@@ -25,3 +25,6 @@ categories:
 
 template: |
   $CHANGES
+
+  [See all changes between $PREVIOUS_TAG and $RESOLVED_VERSION](https://github.com/custom-components/healthchecksio/compare/${PREVIOUS_TAG}...${RESOLVED_VERSION})
+  [See all changes between $MAJOR and $RESOLVED_VERSION](https://github.com/custom-components/healthchecksio/compare/${MAJOR}.0.0...${RESOLVED_VERSION})
