@@ -8,5 +8,5 @@
   "documentation": "https://github.com/custom-components/healthchecksio",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/custom-components/healthchecksio/issues",
-  "version": "100.0.0b2"
+  "version": "100.0.0b3"
 }

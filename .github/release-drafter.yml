@@ -1,25 +1,34 @@
-change-template: '- #$NUMBER $TITLE @$AUTHOR'
+change-template: "- #$NUMBER $TITLE @$AUTHOR"
 sort-direction: ascending
-exclude-labels:
-  - "actions"
-  - "repository"
+include-labels:
+  - "beta"
+  - "breaking-chang"
+  - "bugfix"
+  - "dependencies"
+  - "enhancement"
+  - "feature"
+  - "refactor"
 categories:
-  - title: ":boom: Breaking Changes"
+  - title: "💥 Breaking changes"
     label: "breaking-change"
 
-  - title: ":bug: Bug Fixes"
-    label: "bugfix"
+  - title: "🚧 Beta changes"
+    label: "beta"
+    collapse-after: 1
 
-  - title: ":sparkles: New Features"
+  - title: "✨ New features"
     label: "feature"
 
-  - title: ":zap: Performance"
+  - title: "🚀 Performance"
     label: "enhancement"
 
-  - title: ":recycle: Refactor"
+  - title: "🔨 Refactor"
     label: "refactor"
 
-  - title: ":arrow_up: Dependency Updates"
+  - title: "🐛 Bug Fixes"
+    label: "bugfix"
+
+  - title: "⬆️ Dependency updates"
     label: "dependencies"
     collapse-after: 1
 
