@@ -48,6 +48,10 @@ This is the path of the endpoint used for pings.
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
+## Analytics
+
+If you are using this integration, please consider enabling [Home Assistant usage analytics](https://www.home-assistant.io/integrations/analytics/#usage-analytics).
+
 ***
 
 [healthchecksio]: https://healthchecks.io
