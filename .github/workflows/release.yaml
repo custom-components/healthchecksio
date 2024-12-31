@@ -26,6 +26,11 @@ jobs:
             exit 1
           fi
 
+      - name: Create zip file for the integration
+        run: |
+          cd "${{ github.workspace }}/custom_components/healthchecksio"
+          zip healthchecksio.zip -r ./
+
       - name: Upload the zipfile as a release asset
         uses: softprops/action-gh-release@v2.2.0
         with:
