@@ -2,7 +2,7 @@ change-template: "- #$NUMBER $TITLE @$AUTHOR"
 sort-direction: ascending
 include-labels:
   - "beta"
-  - "breaking-chang"
+  - "breaking-change"
   - "bugfix"
   - "dependencies"
   - "enhancement"
