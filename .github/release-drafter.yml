@@ -35,4 +35,5 @@ categories:
 template: |
   $CHANGES
 
+  ***
   If you are using this integration, please consider enabling [Home Assistant usage analytics](https://www.home-assistant.io/integrations/analytics/#usage-analytics).
