@@ -36,8 +36,9 @@ This is the ID of the check that the integration should update. It looks somethi
 
 The API key to your account. You can find it under the "Settings" tab in your project.
 
-> [!NOTE]
+> [!NOTE]  
 > A **Full Access** API key is required for this integration to function correctly. This is because the integration both pings checks (which requires write access) and reads the status of all your checks to create entities in Home Assistant (which requires read access). Only the Full Access key provides both permissions needed for these operations.
+
 
 ## For self-hosted instances
 
