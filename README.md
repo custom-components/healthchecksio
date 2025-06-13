@@ -6,10 +6,6 @@
 
 [![hacs][hacsbadge]](hacs)
 ![Project Maintenance][maintenance-shield]
-[![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
-
-[![Discord][discord-shield]][discord]
-[![Community Forum][forum-shield]][forum]
 
 _Integration to integrate with [healthchecks.io][healthchecksio]._
 
@@ -54,25 +50,16 @@ This is the path of the endpoint used for pings.
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
 
-## Analytics
-
-If you are using this integration, please consider enabling [Home Assistant usage analytics](https://www.home-assistant.io/integrations/analytics/#usage-analytics).
-
 ***
 
 [healthchecksio]: https://healthchecks.io
-[buymecoffee]: https://www.buymeacoffee.com/ludeeus
-[buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a%20coffee-donate-yellow.svg?style=for-the-badge
-[commits-shield]: https://img.shields.io/github/commit-activity/y/custom-components/healthchecksio.svg?style=for-the-badge
-[commits]: https://github.com/custom-components/healthchecksio/commits/master
-[hacs]: https://github.com/custom-components/hacs
+[commits-shield]: https://img.shields.io/github/commit-activity/y/Snuffy2/healthchecksio.svg?style=for-the-badge
+[commits]: https://github.com/Snuffy2/healthchecksio/commits/master
+[hacs]: https://github.com/Snuffy2/hacs
 [hacsbadge]: https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge
-[discord]: https://discord.gg/Qa5fW2R
-[discord-shield]: https://img.shields.io/discord/330944238910963714.svg?style=for-the-badge
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
-[forum]: https://community.home-assistant.io/
-[license-shield]: https://img.shields.io/github/license/custom-components/healthchecksio.svg?style=for-the-badge
+[license-shield]: https://img.shields.io/github/license/Snuffy2/healthchecksio.svg?style=for-the-badge
 [maintenance-shield]: https://img.shields.io/badge/maintainer-Joakim%20Sørensen%20%40ludeeus-blue.svg?style=for-the-badge
-[releases-shield]: https://img.shields.io/github/release/custom-components/healthchecksio.svg?style=for-the-badge
-[releases]: https://github.com/custom-components/healthchecksio/releases
+[releases-shield]: https://img.shields.io/github/release/Snuffy2/healthchecksio.svg?style=for-the-badge
+[releases]: https://github.com/Snuffy2/healthchecksio/releases
