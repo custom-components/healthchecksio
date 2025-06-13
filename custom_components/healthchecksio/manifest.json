@@ -1,10 +1,15 @@
 {
   "domain": "healthchecksio",
-  "name": "Healthchecks.io",
-  "codeowners": ["@ludeeus"],
+  "name": "HealthChecks.io",
+  "documentation": "https://github.com/Snuffy2/healthchecksio",
+  "issue_tracker": "https://github.com/Snuffy2/healthchecksio/issues",
+  "dependencies": [],
   "config_flow": true,
-  "documentation": "https://github.com/custom-components/healthchecksio",
-  "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/custom-components/healthchecksio/issues",
+  "codeowners": [
+    "@Snuffy2"
+  ],
+  "requirements": [
+    "integrationhelper"
+  ],
   "version": "0.0.0"
 }

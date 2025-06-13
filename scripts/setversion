@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+NEW_VERSION=$1
+
+jq  --arg version "$NEW_VERSION" '.version = $version' ./custom_components/healthchecksio/manifest.json > _manifest_tmp.json
+mv _manifest_tmp.json ./custom_components/healthchecksio/manifest.json

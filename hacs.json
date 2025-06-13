@@ -1,7 +1,5 @@
 {
-    "name": "Healthchecks.io",
-    "zip_release": true,
-    "hide_default_branch": true,
-    "filename": "healthchecksio.zip",
-    "homeassistant": "2024.6.0"
+    "name": "HealthChecks.io",
+    "hacs": "2.0.0",
+    "homeassistant": "2025.4.0"
 }
