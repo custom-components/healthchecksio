@@ -1,22 +1,22 @@
-"""
-Integration to integrate with healthchecks.io
+"""Integration to integrate Home Assistant with HealthChecks.io."""
 
-For more details about this component, please refer to
-https://github.com/custom-components/healthchecksio
-"""
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import os
-from datetime import timedelta
 
 import aiohttp
+from integrationhelper.const import CC_STARTUP_VERSION
+
 from homeassistant import config_entries, core
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.util import Throttle
-from integrationhelper.const import CC_STARTUP_VERSION
 
 from .const import (
     CONF_API_KEY,
@@ -33,17 +33,15 @@ from .const import (
     INTEGRATION_NAME,
     INTEGRATION_VERSION,
     ISSUE_URL,
+    MIN_TIME_BETWEEN_UPDATES,
     OFFICIAL_SITE_ROOT,
     REQUIRED_FILES,
 )
 
-_LOGGER = logging.getLogger(__name__)
-MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
+_LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
-async def async_setup(
-    hass: core.HomeAssistant, config: config_entries.ConfigEntry
-) -> bool:
+async def async_setup(hass: core.HomeAssistant, config: config_entries.ConfigEntry) -> bool:
     """Set up this component using YAML is not supported."""
     if config.get(DOMAIN) is not None:
         _LOGGER.error("Configuration with YAML is not supported")
@@ -52,7 +50,8 @@ async def async_setup(
 
 
 async def async_setup_entry(
-    hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
     # Print startup message
@@ -90,16 +89,17 @@ async def async_setup_entry(
         hass, api_key, check, self_hosted, site_root, ping_endpoint
     )
     await hass.config_entries.async_forward_entry_setups(config_entry, platforms)
-    _LOGGER.debug(f"Config Entry: {config_entry.as_dict()}")
+    _LOGGER.debug("Config Entry: %s", config_entry.as_dict())
 
     return True
 
 
 async def async_unload_entry(
-    hass: core.HomeAssistant, config_entry: config_entries.ConfigEntry
+    hass: core.HomeAssistant,
+    config_entry: config_entries.ConfigEntry,
 ) -> bool:
     """Unload a config entry."""
-    _LOGGER.debug(f"Unloading Config Entry: {config_entry.as_dict()}")
+    _LOGGER.debug("Unloading Config Entry: %s", config_entry.as_dict())
     curr_plat = []
     for p in entity_platform.async_get_platforms(hass, DOMAIN):
         if (
@@ -108,7 +108,7 @@ async def async_unload_entry(
             and p.config_entry.state == config_entries.ConfigEntryState.LOADED
         ):
             curr_plat.append(p.domain)
-    _LOGGER.debug(f"Unloading Platforms: {curr_plat}")
+    _LOGGER.debug("Unloading Platforms: %s", curr_plat)
     unload_ok = True
     if curr_plat:
         unload_ok = await hass.config_entries.async_unload_platforms(
@@ -123,7 +123,7 @@ async def async_unload_entry(
 
 
 class HealthchecksioData:
-    """This class handle communication and stores the data."""
+    """Handles communication and stores the data."""
 
     def __init__(self, hass, api_key, check, self_hosted, site_root, ping_endpoint):
         """Initialize the class."""
@@ -151,17 +151,13 @@ class HealthchecksioData:
             await asyncio.sleep(1)  # needed for self-hosted instances
             try:
                 check_response = await session.get(check_url, timeout=timeout10)
-            except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-                _LOGGER.error(f"Could Not Send Check: {error}")
+            except (TimeoutError, aiohttp.ClientError) as error:
+                _LOGGER.error("Could Not Send Check: %s", error)
             else:
                 if check_response.ok:
-                    _LOGGER.debug(
-                        f"Send Check HTTP Status Code: {check_response.status}"
-                    )
+                    _LOGGER.debug("Send Check HTTP Status Code: %s", check_response.status)
                 else:
-                    _LOGGER.error(
-                        f"Error: Send Check HTTP Status Code: {check_response.status}"
-                    )
+                    _LOGGER.error("Error: Send Check HTTP Status Code: %s", check_response.status)
         else:
             _LOGGER.debug("Send Check is not defined")
         try:
@@ -169,28 +165,28 @@ class HealthchecksioData:
                 f"{self.site_root}/api/v1/checks/", headers=headers, timeout=timeout10
             )
             self.hass.data[DOMAIN_DATA][DATA_DATA] = await data.json()
-        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
-            _LOGGER.error(f"Could Not Update Data: {error}")
+        except (TimeoutError, aiohttp.ClientError) as error:
+            _LOGGER.error("Could Not Update Data: %s", error)
         except (ValueError, json.decoder.JSONDecodeError) as error:
-            _LOGGER.error(f"Data JSON Decode Error: {error}")
+            _LOGGER.error("Data JSON Decode Error: %s", error)
         else:
             if data.ok:
-                _LOGGER.debug(f"Get Data HTTP Status Code: {data.status}")
+                _LOGGER.debug("Get Data HTTP Status Code: %s", data.status)
             else:
-                _LOGGER.error(f"Error: Get Data HTTP Status Code: {data.status}")
+                _LOGGER.error("Error: Get Data HTTP Status Code: %s", data.status)
 
 
 async def check_files(hass: core.HomeAssistant) -> bool:
     """Return bool that indicates if all files are present."""
     # Verify that the user downloaded all files.
-    base = f"{hass.config.path()}/custom_components/{DOMAIN}/"
-    missing = []
+    base: str = f"{hass.config.path()}/custom_components/{DOMAIN}/"
+    missing: list[str] = []
     for file in REQUIRED_FILES:
-        fullpath = "{}{}".format(base, file)
+        fullpath = f"{base}{file}"
         if not os.path.exists(fullpath):
             missing.append(file)
 
     if missing:
-        _LOGGER.critical(f"The following files are missing: {missing}")
+        _LOGGER.critical("The following files are missing: %s", missing)
         return False
     return True

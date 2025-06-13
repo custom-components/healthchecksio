@@ -1,12 +1,12 @@
 {
   "domain": "healthchecksio",
   "name": "HealthChecks.io",
-  "documentation": "https://github.com/custom-components/healthchecksio",
-  "issue_tracker": "https://github.com/custom-components/healthchecksio/issues",
+  "documentation": "https://github.com/Snuffy2/healthchecksio",
+  "issue_tracker": "https://github.com/Snuffy2/healthchecksio/issues",
   "dependencies": [],
   "config_flow": true,
   "codeowners": [
-    "@ludeeus"
+    "@Snuffy2"
   ],
   "requirements": [
     "integrationhelper"
