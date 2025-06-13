@@ -1,11 +1,13 @@
-"""Add coordinator for Healthchecks.io integration."""
+"""Coordinator for Healthchecks.io integration."""
 
 from __future__ import annotations
 
-from logging import getLogger
+from collections.abc import MutableMapping
+import logging
 from typing import TYPE_CHECKING, Any
 
 from aiohttp import ClientSession, ClientTimeout
+
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DOMAIN, MIN_TIME_BETWEEN_UPDATES
@@ -14,7 +16,7 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
 
-LOGGER = getLogger(__name__)
+_LOGGER: logging.Logger = logging.getLogger(__name__)
 
 
 class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
@@ -32,24 +34,24 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
         check_id: str | None = None,
         site_root: str | None = None,
         ping_endpoint: str | None = None,
-    ):
+    ) -> None:
         """Initialize."""
         super().__init__(
             hass=hass,
-            logger=LOGGER,
+            logger=_LOGGER,
             name=DOMAIN,
             update_interval=MIN_TIME_BETWEEN_UPDATES,
         )
-        self._api_key = api_key
-        self._site_root = site_root
-        self._session = session
-        self._self_hosted = self_hosted
-        self._check_id = check_id
-        self._ping_endpoint = ping_endpoint
+        self._api_key: str = api_key
+        self._site_root: str | None = site_root
+        self._session: ClientSession = session
+        self._self_hosted: bool = self_hosted
+        self._check_id: str | None = check_id
+        self._ping_endpoint: str | None = ping_endpoint
 
-    async def _async_update_data(self) -> dict[str, Any]:
+    async def _async_update_data(self) -> MutableMapping[str, Any]:
         """Update data."""
-        check_url = (
+        check_url: str = (
             f"https://hc-ping.com/{self._check_id}"
             if not self._self_hosted
             else f"{self._site_root}/{self._ping_endpoint}/{self._check_id}"
@@ -61,7 +63,7 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
                 timeout=ClientTimeout(total=10),
             )
         except Exception:
-            LOGGER.exception("Could not ping")
+            _LOGGER.exception("Could not ping")
 
         try:
             data = await self._session.get(
