@@ -12,17 +12,9 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 DOMAIN = "healthchecksio"
 DOMAIN_DATA = f"{DOMAIN}_data"
 INTEGRATION_NAME = "HealthChecks.io"
-INTEGRATION_VERSION = "main"
+VERSION = "0.0.0"
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR]
-REQUIRED_FILES: list[str] = [
-    "translations/en.json",
-    "binary_sensor.py",
-    "const.py",
-    "config_flow.py",
-    "manifest.json",
-]
 
-ISSUE_URL = "https://github.com/custom-components/healthchecksio/issues"
 ATTRIBUTION = "Data is provided by HealthChecks.io."
 
 OFFICIAL_SITE_ROOT = "https://healthchecks.io"
