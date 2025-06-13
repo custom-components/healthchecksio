@@ -1,18 +1,20 @@
 {
     "config": {
-        "title": "Healthchecks.io",
+        "title": "HealthChecks.io",
         "step": {
             "user": {
-                "title": "Healthchecks.io",
+                "title": "HealthChecks.io",
                 "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
                 "data": {
                     "api_key": "API key",
                     "check": "Check ID",
+                    "create_binary_sensor": "Create Binary Sensors",
+                    "create_sensor": "Create Sensors",
                     "self_hosted": "Use self-hosted instance"
                 }
             },
             "self_hosted": {
-                "title": "Healthchecks.io self-hosted instance",
+                "title": "HealthChecks.io self-hosted instance",
                 "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
                 "data": {
                     "site_root": "Instance root URL",
@@ -21,10 +23,12 @@
             }
         },
         "error": {
-            "auth": "API Key, Check ID, Site root or Ping endpoint is wrong."
+            "auth": "API Key or Check ID is wrong.",
+            "auth_self": "API Key, Check ID, Site root or Ping endpoint is wrong.",
+            "need_a_sensor": "Must choose to Create Binary Sensor, Sensor or both."
         },
         "abort": {
-            "single_instance_allowed": "Only a single configuration of Blueprint is allowed."
+            "single_instance_allowed": "Only a single configuration of HealthChecks.io is allowed."
         }
     }
 }

@@ -1,6 +1,6 @@
 {
   "domain": "healthchecksio",
-  "name": "Healthchecks.io",
+  "name": "HealthChecks.io",
   "documentation": "https://github.com/custom-components/healthchecksio",
   "issue_tracker": "https://github.com/custom-components/healthchecksio/issues",
   "dependencies": [],

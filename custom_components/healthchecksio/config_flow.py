@@ -1,142 +1,220 @@
-"""Adds config flow for Blueprint."""
+"""Adds config flow for HealthChecks.io"""
 import asyncio
-from collections import OrderedDict
+import json
+import logging
 
-import async_timeout
+import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
+from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from integrationhelper import Logger
 
-from .const import DOMAIN, DOMAIN_DATA, OFFICIAL_SITE_ROOT
+from .const import (
+    CONF_API_KEY,
+    CONF_CHECK,
+    CONF_CREATE_BINARY_SENSOR,
+    CONF_CREATE_SENSOR,
+    CONF_PING_ENDPOINT,
+    CONF_SELF_HOSTED,
+    CONF_SITE_ROOT,
+    DEFAULT_CREATE_BINARY_SENSOR,
+    DEFAULT_CREATE_SENSOR,
+    DEFAULT_PING_ENDPOINT,
+    DEFAULT_SELF_HOSTED,
+    DEFAULT_SITE_ROOT,
+    DOMAIN,
+    DOMAIN_DATA,
+    OFFICIAL_SITE_ROOT,
+)
+
+_LOGGER = logging.getLogger(__name__)
 
 
-@config_entries.HANDLERS.register(DOMAIN)
-class BlueprintFlowHandler(config_entries.ConfigFlow):
-    """Config flow for Blueprint."""
+async def _test_credentials(
+    hass, api_key, check, self_hosted, site_root, ping_endpoint
+):
+    """Return true if credentials is valid."""
+    _LOGGER.debug("Testing Credentials")
+    verify_ssl = not self_hosted or site_root.startswith("https")
+    session = async_get_clientsession(hass, verify_ssl)
+    timeout10 = aiohttp.ClientTimeout(total=10)
+    headers = {"X-Api-Key": api_key}
+    if check is not None:
+        if self_hosted:
+            check_url = f"{site_root}/{ping_endpoint}/{check}"
+        else:
+            check_url = f"https://hc-ping.com/{check}"
+        await asyncio.sleep(1)  # needed for self-hosted instances
+        try:
+            check_response = await session.get(check_url, timeout=timeout10)
+        except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+            _LOGGER.error(f"Could Not Send Check: {error}")
+            return False
+        else:
+            if check_response.ok:
+                _LOGGER.debug(f"Send Check HTTP Status Code: {check_response.status}")
+            else:
+                check_url = f"https://hc-ping.com/{check}"
+            await asyncio.sleep(1)  # needed for self-hosted instances
+            try:
+                check_response = await session.get(check_url, timeout=timeout10)
+            except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+                _LOGGER.error(f"Could Not Send Check: {error}")
+                return False
+    else:
+        _LOGGER.debug("Send Check is not defined")
+    try:
+        data = await session.get(
+            f"{site_root}/api/v1/checks/", headers=headers, timeout=timeout10
+        )
+        hass.data[DOMAIN_DATA] = {"data": await data.json()}
+    except (aiohttp.ClientError, asyncio.TimeoutError) as error:
+        _LOGGER.error(f"Could Not Update Data: {error}")
+        return False
+    except (ValueError, json.decoder.JSONDecodeError) as error:
+        _LOGGER.error(f"Data JSON Decode Error: {error}")
+        return False
+    else:
+        if not data.ok:
+            _LOGGER.error(f"Error: Get Data HTTP Status Code: {data.status}")
+            return False
+        _LOGGER.debug(f"Get Data HTTP Status Code: {data.status}")
+        return True
+
+
+class HealchecksioConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Config flow for HealthChecks.io"""
 
     VERSION = 1
-    CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     def __init__(self):
         """Initialize."""
         self._errors = {}
         self.initial_data = None
 
-    async def async_step_user(self, user_input=None):
-        """Handle a flow initialized by the user."""
+    async def async_step_user(self, user_input=None, errors=None):
         self._errors = {}
-        if self._async_current_entries():
-            return self.async_abort(reason="single_instance_allowed")
-        if self.hass.data.get(DOMAIN):
+        if self._async_current_entries() or self.hass.data.get(DOMAIN):
             return self.async_abort(reason="single_instance_allowed")
 
         if user_input is not None:
-            if user_input["self_hosted"]:
+            if not user_input.get(CONF_CREATE_BINARY_SENSOR) and not user_input.get(
+                CONF_CREATE_SENSOR
+            ):
+                self._errors["base"] = "need_a_sensor"
+            elif user_input.get(CONF_SELF_HOSTED):
                 # don't check yet, we need more info
                 self.initial_data = user_input
-                return await self._show_self_hosted_config_flow(user_input)
+                return await self.async_step_self_hosted()
             else:
-                valid = await self._test_credentials(
-                    user_input["api_key"],
-                    user_input["check"],
+                valid = await _test_credentials(
+                    self.hass,
+                    user_input.get(CONF_API_KEY),
+                    user_input.get(CONF_CHECK),
                     False,
                     OFFICIAL_SITE_ROOT,
                     None,
                 )
                 if valid:
-                    user_input["self_hosted"] = False
+                    user_input[CONF_SELF_HOSTED] = False
                     return self.async_create_entry(
-                        title=user_input["check"], data=user_input
+                        title=user_input.get(CONF_CHECK, DOMAIN), data=user_input
                     )
                 else:
                     self._errors["base"] = "auth"
 
-        return await self._show_initial_config_form(user_input)
-
-    async def _show_initial_config_form(self, user_input):
-        """Show the configuration form to edit check data."""
-        # Defaults
-        api_key = ""
-        check = ""
-        self_hosted = False
-
-        if user_input is not None:
-            if "api_key" in user_input:
-                api_key = user_input["api_key"]
-            if "check" in user_input:
-                check = user_input["check"]
-            if "self_hosted" in user_input:
-                self_hosted = user_input["self_hosted"]
-
-        data_schema = OrderedDict()
-        data_schema[vol.Required("api_key", default=api_key)] = str
-        data_schema[vol.Required("check", default=check)] = str
-        data_schema[vol.Required("self_hosted", default=self_hosted)] = bool
-        return self.async_show_form(
-            step_id="user", data_schema=vol.Schema(data_schema), errors=self._errors
+        DATA_SCHEMA = vol.Schema(
+            {
+                vol.Required(
+                    CONF_API_KEY,
+                    default=user_input.get(CONF_API_KEY)
+                    if user_input is not None
+                    else None,
+                ): str,
+            }
         )
 
-    async def async_step_self_hosted(self, user_input):
+        if user_input is not None and user_input.get(CONF_CHECK) is not None:
+            DATA_SCHEMA = DATA_SCHEMA.extend(
+                {
+                    vol.Optional(CONF_CHECK, default=user_input.get(CONF_CHECK)): str,
+                }
+            )
+        else:
+            DATA_SCHEMA = DATA_SCHEMA.extend(
+                {
+                    vol.Optional(CONF_CHECK): str,
+                }
+            )
+        DATA_SCHEMA = DATA_SCHEMA.extend(
+            {
+                vol.Optional(
+                    CONF_CREATE_BINARY_SENSOR,
+                    default=user_input.get(
+                        CONF_CREATE_BINARY_SENSOR, DEFAULT_CREATE_BINARY_SENSOR
+                    )
+                    if user_input is not None
+                    else DEFAULT_CREATE_BINARY_SENSOR,
+                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+                vol.Optional(
+                    CONF_CREATE_SENSOR,
+                    default=user_input.get(CONF_CREATE_SENSOR, DEFAULT_CREATE_SENSOR)
+                    if user_input is not None
+                    else DEFAULT_CREATE_SENSOR,
+                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+                vol.Optional(
+                    CONF_SELF_HOSTED,
+                    default=user_input.get(CONF_SELF_HOSTED, DEFAULT_SELF_HOSTED)
+                    if user_input is not None
+                    else DEFAULT_SELF_HOSTED,
+                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+            }
+        )
+
+        return self.async_show_form(
+            step_id="user", data_schema=DATA_SCHEMA, errors=self._errors
+        )
+
+    async def async_step_self_hosted(self, user_input=None):
         """Handle the step for a self-hosted instance."""
         self._errors = {}
-        valid = await self._test_credentials(
-            self.initial_data["api_key"],
-            self.initial_data["check"],
-            True,
-            user_input["site_root"],
-            user_input["ping_endpoint"],
+        if user_input is not None:
+            valid = await _test_credentials(
+                self.hass,
+                self.initial_data.get(CONF_API_KEY),
+                self.initial_data.get(CONF_CHECK),
+                True,
+                user_input.get(CONF_SITE_ROOT),
+                user_input.get(CONF_PING_ENDPOINT),
+            )
+            if valid:
+                # merge data from initial config flow and this flow
+                data = {**self.initial_data, **user_input}
+                return self.async_create_entry(
+                    title=self.initial_data.get(CONF_CHECK, DOMAIN), data=data
+                )
+            else:
+                self._errors["base"] = "auth_self"
+
+        SELF_HOSTED_DATA_SCHEMA = vol.Schema(
+            {
+                vol.Required(
+                    CONF_SITE_ROOT,
+                    default=user_input.get(CONF_SITE_ROOT, DEFAULT_SITE_ROOT)
+                    if user_input is not None
+                    else DEFAULT_SITE_ROOT,
+                ): str,
+                vol.Optional(
+                    CONF_PING_ENDPOINT,
+                    default=user_input.get(CONF_PING_ENDPOINT, DEFAULT_PING_ENDPOINT)
+                    if user_input is not None
+                    else DEFAULT_PING_ENDPOINT,
+                ): str,
+            }
         )
-        if valid:
-            # merge data from initial config flow and this flow
-            data = {**self.initial_data, **user_input}
-            return self.async_create_entry(title=self.initial_data["check"], data=data)
-        else:
-            self._errors["base"] = "auth"
 
-        return await self._show_self_hosted_config_flow(user_input)
-
-    async def _show_self_hosted_config_flow(self, user_input):
-        """Show the configuration form to edit self-hosted instance data."""
-        # Defaults
-        site_root = "https://checks.mydomain.com"
-        ping_endpoint = "ping"
-
-        if "site_root" in user_input:
-            site_root = user_input["site_root"]
-        if "ping_endpoint" in user_input:
-            ping_endpoint = user_input["ping_endpoint"]
-
-        data_schema = OrderedDict()
-        data_schema[vol.Required("site_root", default=site_root)] = str
-        data_schema[vol.Required("ping_endpoint", default=ping_endpoint)] = str
         return self.async_show_form(
             step_id="self_hosted",
-            data_schema=vol.Schema(data_schema),
+            data_schema=SELF_HOSTED_DATA_SCHEMA,
             errors=self._errors,
         )
-
-    async def _test_credentials(
-        self, api_key, check, self_hosted, site_root, ping_endpoint
-    ):
-        """Return true if credentials is valid."""
-        try:
-            verify_ssl = not self_hosted or site_root.startswith("https")
-            session = async_get_clientsession(self.hass, verify_ssl)
-            headers = {"X-Api-Key": api_key}
-            async with async_timeout.timeout(10):
-                Logger("custom_components.healthchecksio").info("Checking API Key")
-                data = await session.get(f"{site_root}/api/v1/checks/", headers=headers)
-                self.hass.data[DOMAIN_DATA] = {"data": await data.json()}
-
-                Logger("custom_components.healthchecksio").info("Checking Check ID")
-                if self_hosted:
-                    check_url = f"{site_root}/{ping_endpoint}/{check}"
-                else:
-                    check_url = f"https://hc-ping.com/{check}"
-                await asyncio.sleep(1)  # needed for self-hosted instances
-                await session.get(check_url)
-            return True
-        except Exception as exception:  # pylint: disable=broad-except
-            Logger("custom_components.healthchecksio").error(exception)
-        return False
