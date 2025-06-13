@@ -25,15 +25,20 @@ This integration can **only** be configured via the UI.
 
 ### Check ID
 
-This is the ID of the check that the integration should update, this ID looks something like `aa247c51-8da8-4800-86a3-48763142e902`
+This is the ID of the check that the integration should update. It looks something like `aa247c51-8da8-4800-86a3-48763142e902`.
 
-This integration will send an update to it every `5` minutes.
+### What the integration does
+
+- Pings the specified Healthchecks.io check every 5 minutes to monitor the state of Home Assistant.
+- Pulls your other Healthchecks.io checks as entities, so you can monitor their statuses directly in Home Assistant.
 
 ### API Key
 
-The API key to your account.
-You can find it under the "Settings" tab in your project.
-This should **not** be the "Read only" key.
+The API key to your account. You can find it under the "Settings" tab in your project.
+
+> [!NOTE]
+> A **Full Access** API key is required for this integration to function correctly. This is because the integration both pings checks (which requires write access) and reads the status of all your checks to create entities in Home Assistant (which requires read access). Only the Full Access key provides both permissions needed for these operations.
+
 
 ## For self-hosted instances
 
@@ -48,6 +53,10 @@ This is the path of the endpoint used for pings.
 ## Contributions are welcome!
 
 If you want to contribute to this please read the [Contribution guidelines](CONTRIBUTING.md)
+
+## Analytics
+
+If you are using this integration, please consider enabling [Home Assistant usage analytics](https://www.home-assistant.io/integrations/analytics/#usage-analytics).
 
 ***
 

@@ -1,20 +1,32 @@
-name: Lint
+name: "Lint"
 
 on:
-  pull_request:
-    branches:
-      - main
   push:
     branches:
-      - main
+      - "main"
+  pull_request:
+    branches:
+      - "main"
 
 jobs:
-  black:
-    name: Black
-    runs-on: ubuntu-latest
+  ruff:
+    name: "Ruff"
+    runs-on: "ubuntu-latest"
     steps:
-      - name: 📥 Checkout the repository
-        uses: actions/checkout@v2
+        - name: "Checkout the repository"
+          uses: "actions/checkout@v4.2.2"
 
-      - name: ⬛ Run Black
-        uses: psf/black@stable
+        - name: "Set up Python"
+          uses: actions/setup-python@v5.6.0
+          with:
+            python-version: "3.13"
+            cache: "pip"
+
+        - name: "Install requirements"
+          run: python3 -m pip install -r requirements.txt
+
+        - name: "Lint"
+          run: python3 -m ruff check .
+
+        - name: "Format"
+          run: python3 -m ruff format . --check
