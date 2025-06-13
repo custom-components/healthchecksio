@@ -1,25 +1,7 @@
-"""Binary sensor platform for Healthchecksio."""
-
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, Any
+"""Sensor platform for Healthchecksio."""
 import logging
 
-
-from homeassistant.components.binary_sensor import (
-    BinarySensorDeviceClass,
-    BinarySensorEntity,
-)
-
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-
-from .const import ATTRIBUTION, DOMAIN
-
-if TYPE_CHECKING:
-    from homeassistant.core import HomeAssistant
-
-    from .coordinator import HealthchecksioDataUpdateCoordinator
-
+from homeassistant.components.sensor import SensorEntity
 
 from .const import (
     ATTR_ATTRIBUTION,
@@ -33,13 +15,18 @@ from .const import (
     DATA_DATA,
     DOMAIN,
     DOMAIN_DATA,
+    ICON_DEFAULT,
+    ICON_DOWN,
+    ICON_GRACE,
+    ICON_PAUSED,
+    ICON_UP,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass, config_entry, async_add_devices):
-    """Setup Binary Sensor platform."""
+    """Setup sensor platform."""
     await hass.data[DOMAIN_DATA][DATA_CLIENT].update_data()
     checks = []
     for check in hass.data[DOMAIN_DATA].get(DATA_DATA, {}).get(ATTR_CHECKS, []):
@@ -49,39 +36,26 @@ async def async_setup_entry(hass, config_entry, async_add_devices):
             ATTR_STATUS: check.get(ATTR_STATUS),
             ATTR_PING_URL: check.get(ATTR_PING_URL),
         }
-        checks.append(HealthchecksioBinarySensor(hass, check_data, config_entry))
+        checks.append(HealthchecksioSensor(hass, check_data, config_entry))
     async_add_devices(checks, True)
 
 
-class HealthchecksioBinarySensor(BinarySensorEntity, CoordinatorEntity):
-    """Healthchecksio binary_sensor class."""
+class HealthchecksioSensor(SensorEntity):
+    """Healthchecksio Sensor class."""
 
-    coordinator: HealthchecksioDataUpdateCoordinator
-
-    _attr_attribution = ATTRIBUTION
-    _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
-
-    def __init__(
-        self,
-        *,
-        hass: HomeAssistant,
-        coordinator: HealthchecksioDataUpdateCoordinator,
-        ping_url: str | None = None,
-        unique_key: str | None = None,
-    ):
-        super().__init__(coordinator)
+    def __init__(self, hass, check_data, config_entry):
         self.hass = hass
         self.config_entry = config_entry
         self.check_data = check_data
         self._attr_name = None
-        self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
         self._attr_unique_id = self.check_data.get(ATTR_PING_URL, "").split("/")[-1]
         self._attr_extra_state_attributes = {}
-        self._attr_is_on = None
+        self._attr_native_value = None
+        self._attr_icon = ICON_DEFAULT
         self.check = {}
 
     async def async_update(self):
-        """Update the binary_sensor."""
+        """Update the Sensor."""
         await self.hass.data[DOMAIN_DATA][DATA_CLIENT].update_data()
         for check in (
             self.hass.data[DOMAIN_DATA].get(DATA_DATA, {}).get(ATTR_CHECKS, [])
@@ -90,7 +64,23 @@ class HealthchecksioBinarySensor(BinarySensorEntity, CoordinatorEntity):
                 self.check = check
                 break
         self._attr_name = self.check.get(ATTR_NAME)
-        self._attr_is_on = self.check.get(ATTR_STATUS) != "down"
+        self._attr_native_value = self.check.get(ATTR_STATUS)
+        if isinstance(self._attr_native_value, str):
+            if self._attr_native_value.lower() == "new":
+                self._attr_icon = ICON_DEFAULT
+            elif self._attr_native_value.lower() == "up":
+                self._attr_icon = ICON_UP
+            elif self._attr_native_value.lower() == "grace":
+                self._attr_icon = ICON_GRACE
+            elif self._attr_native_value.lower() == "down":
+                self._attr_icon = ICON_DOWN
+            elif self._attr_native_value.lower() == "paused":
+                self._attr_icon = ICON_PAUSED
+            else:
+                self._attr_icon = ICON_DEFAULT
+            self._attr_native_value = self._attr_native_value.title()
+        else:
+            self._attr_icon = ICON_DEFAULT
         self._attr_extra_state_attributes[ATTR_ATTRIBUTION] = ATTRIBUTION
         self._attr_extra_state_attributes[ATTR_LAST_PING] = self.check.get(
             ATTR_LAST_PING
