@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
-
-import aiohttp
 
 from homeassistant import config_entries, core
 from homeassistant.config_entries import ConfigEntry
@@ -14,23 +10,16 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.util import Throttle
 
 from .const import (
-    CONF_API_KEY,
-    CONF_CHECK,
     CONF_CREATE_BINARY_SENSOR,
     CONF_CREATE_SENSOR,
-    CONF_PING_ENDPOINT,
     CONF_SELF_HOSTED,
     CONF_SITE_ROOT,
-    DATA_CLIENT,
-    DATA_DATA,
+    DEFAULT_SELF_HOSTED,
     DOMAIN,
-    DOMAIN_DATA,
-    MIN_TIME_BETWEEN_UPDATES,
-    OFFICIAL_SITE_ROOT,
 )
+from .coordinator import HealthchecksioDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -41,28 +30,34 @@ async def async_setup_entry(
 ) -> bool:
     """Set up this integration using UI."""
 
-    # Create DATA dict
-    if DOMAIN_DATA not in hass.data:
-        hass.data[DOMAIN_DATA] = {}
-    if DATA_DATA not in hass.data[DOMAIN_DATA]:
-        hass.data[DOMAIN_DATA][DATA_DATA] = {}
-
     # Get "global" configuration.
-    api_key = config_entry.data.get(CONF_API_KEY)
-    check = config_entry.data.get(CONF_CHECK)
-    self_hosted = config_entry.data.get(CONF_SELF_HOSTED)
-    site_root = config_entry.data.get(CONF_SITE_ROOT)
-    ping_endpoint = config_entry.data.get(CONF_PING_ENDPOINT)
-    platforms = []
+    self_hosted: bool = config_entry.data.get(CONF_SELF_HOSTED, DEFAULT_SELF_HOSTED)
+    site_root: str | None = config_entry.data.get(CONF_SITE_ROOT)
+    platforms: list[Platform] = []
     if config_entry.data.get(CONF_CREATE_BINARY_SENSOR):
         platforms.append(Platform.BINARY_SENSOR)
     if config_entry.data.get(CONF_CREATE_SENSOR):
         platforms.append(Platform.SENSOR)
 
     # Configure the client.
-    hass.data[DOMAIN_DATA][DATA_CLIENT] = HealthchecksioData(
-        hass, api_key, check, self_hosted, site_root, ping_endpoint
+    coordinator: HealthchecksioDataUpdateCoordinator = HealthchecksioDataUpdateCoordinator(
+        hass=hass,
+        api_key=config_entry.data["api_key"],
+        session=async_get_clientsession(
+            hass=hass,
+            verify_ssl=bool(
+                not self_hosted or (isinstance(site_root, str) and site_root.startswith("https"))
+            ),
+        ),
+        self_hosted=self_hosted,
+        check_id=config_entry.data["check"],
+        site_root=site_root,
+        ping_endpoint=config_entry.data.get("ping_endpoint"),
     )
+    config_entry.runtime_data = coordinator
+
+    await coordinator.async_config_entry_first_refresh()
+
     await hass.config_entries.async_forward_entry_setups(config_entry, platforms)
     _LOGGER.debug("Config Entry: %s", config_entry.as_dict())
 
@@ -93,61 +88,6 @@ async def async_unload_entry(
             curr_plat,
         )
     if unload_ok:
-        hass.data.pop(DOMAIN_DATA, None)
         _LOGGER.info("Successfully removed the HealthChecks.io integration")
 
     return unload_ok
-
-
-class HealthchecksioData:
-    """Handles communication and stores the data."""
-
-    def __init__(self, hass, api_key, check, self_hosted, site_root, ping_endpoint):
-        """Initialize the class."""
-        self.hass = hass
-        self.api_key = api_key
-        self.check = check
-        self.self_hosted = self_hosted
-        self.site_root = site_root if self_hosted else OFFICIAL_SITE_ROOT
-        self.ping_endpoint = ping_endpoint
-
-    @Throttle(MIN_TIME_BETWEEN_UPDATES)
-    async def update_data(self):
-        """Update data."""
-        _LOGGER.debug("Running Update")
-        # This is where the main logic to update platform data goes.
-        verify_ssl = not self.self_hosted or self.site_root.startswith("https")
-        session = async_get_clientsession(self.hass, verify_ssl)
-        timeout10 = aiohttp.ClientTimeout(total=10)
-        headers = {"X-Api-Key": self.api_key}
-        if self.check is not None:
-            if self.self_hosted:
-                check_url = f"{self.site_root}/{self.ping_endpoint}/{self.check}"
-            else:
-                check_url = f"https://hc-ping.com/{self.check}"
-            await asyncio.sleep(1)  # needed for self-hosted instances
-            try:
-                check_response = await session.get(check_url, timeout=timeout10)
-            except (TimeoutError, aiohttp.ClientError) as error:
-                _LOGGER.error("Could Not Send Check: %s", error)
-            else:
-                if check_response.ok:
-                    _LOGGER.debug("Send Check HTTP Status Code: %s", check_response.status)
-                else:
-                    _LOGGER.error("Error: Send Check HTTP Status Code: %s", check_response.status)
-        else:
-            _LOGGER.debug("Send Check is not defined")
-        try:
-            data = await session.get(
-                f"{self.site_root}/api/v1/checks/", headers=headers, timeout=timeout10
-            )
-            self.hass.data[DOMAIN_DATA][DATA_DATA] = await data.json()
-        except (TimeoutError, aiohttp.ClientError) as error:
-            _LOGGER.error("Could Not Update Data: %s", error)
-        except (ValueError, json.decoder.JSONDecodeError) as error:
-            _LOGGER.error("Data JSON Decode Error: %s", error)
-        else:
-            if data.ok:
-                _LOGGER.debug("Get Data HTTP Status Code: %s", data.status)
-            else:
-                _LOGGER.error("Error: Get Data HTTP Status Code: %s", data.status)

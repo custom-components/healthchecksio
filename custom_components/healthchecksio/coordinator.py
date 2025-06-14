@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import MutableMapping
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -15,6 +14,7 @@ from .const import DOMAIN, MIN_TIME_BETWEEN_UPDATES
 if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
     from homeassistant.core import HomeAssistant
+
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
         site_root: str | None = None,
         ping_endpoint: str | None = None,
     ) -> None:
-        """Initialize."""
+        """Initialize coordinator."""
         super().__init__(
             hass=hass,
             logger=_LOGGER,
@@ -49,7 +49,7 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
         self._check_id: str | None = check_id
         self._ping_endpoint: str | None = ping_endpoint
 
-    async def _async_update_data(self) -> MutableMapping[str, Any]:
+    async def _async_update_data(self) -> dict[str, Any]:
         """Update data."""
         check_url: str = (
             f"https://hc-ping.com/{self._check_id}"
