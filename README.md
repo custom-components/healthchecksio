@@ -5,7 +5,6 @@
 [![License][license-shield]](LICENSE.md)
 
 [![hacs][hacsbadge]](hacs)
-![Project Maintenance][maintenance-shield]
 
 _Integration to integrate with [healthchecks.io][healthchecksio]._
 
@@ -55,11 +54,10 @@ If you want to contribute to this please read the [Contribution guidelines](CONT
 [healthchecksio]: https://healthchecks.io
 [commits-shield]: https://img.shields.io/github/commit-activity/y/Snuffy2/healthchecksio.svg?style=for-the-badge
 [commits]: https://github.com/Snuffy2/healthchecksio/commits/master
-[hacs]: https://github.com/Snuffy2/hacs
-[hacsbadge]: https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge
+[hacs]: https://hacs.xyz/
+[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge
 [exampleimg]: example.png
 [forum-shield]: https://img.shields.io/badge/community-forum-brightgreen.svg?style=for-the-badge
 [license-shield]: https://img.shields.io/github/license/Snuffy2/healthchecksio.svg?style=for-the-badge
-[maintenance-shield]: https://img.shields.io/badge/maintainer-Joakim%20Sørensen%20%40ludeeus-blue.svg?style=for-the-badge
 [releases-shield]: https://img.shields.io/github/release/Snuffy2/healthchecksio.svg?style=for-the-badge
 [releases]: https://github.com/Snuffy2/healthchecksio/releases
