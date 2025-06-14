@@ -1,5 +1,7 @@
 """Config flow for HealthChecks.io integration."""
 
+from __future__ import annotations
+
 import asyncio
 from collections.abc import MutableMapping
 import json
@@ -28,7 +30,6 @@ from .const import (
     DEFAULT_SELF_HOSTED,
     DEFAULT_SITE_ROOT,
     DOMAIN,
-    DOMAIN_DATA,
     OFFICIAL_SITE_ROOT,
 )
 
@@ -55,28 +56,24 @@ async def _test_credentials(
         else:
             check_url = f"https://hc-ping.com/{check}"
         await asyncio.sleep(1)  # needed for self-hosted instances
+
         try:
             check_response = await session.get(check_url, timeout=timeout10)
-        except (aiohttp.TimeoutError, aiohttp.ClientError) as error:
+        except (TimeoutError, aiohttp.ClientError) as error:
             _LOGGER.error("Could Not Send Check: %s", error)
             return False
         else:
             if check_response.ok:
                 _LOGGER.debug("Send Check HTTP Status Code: %s", check_response.status)
             else:
-                check_url = f"https://hc-ping.com/{check}"
-            await asyncio.sleep(1)  # needed for self-hosted instances
-            try:
-                check_response = await session.get(check_url, timeout=timeout10)
-            except (aiohttp.TimeoutError, aiohttp.ClientError) as error:
-                _LOGGER.error("Could Not Send Check: %s", error)
+                _LOGGER.error("Send Check HTTP Status Code: %s", check_response.status)
                 return False
+
     else:
         _LOGGER.debug("Send Check is not defined")
     try:
         data = await session.get(f"{site_root}/api/v1/checks/", headers=headers, timeout=timeout10)
-        hass.data[DOMAIN_DATA] = {"data": await data.json()}
-    except (aiohttp.TimeoutError, aiohttp.ClientError) as error:
+    except (TimeoutError, aiohttp.ClientError) as error:
         _LOGGER.error("Could Not Update Data: %s", error)
         return False
     except (ValueError, json.decoder.JSONDecodeError) as error:
@@ -135,41 +132,49 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
                     )
                 self._errors["base"] = "auth"
 
-        DATA_SCHEMA: vol.Schema = vol.Schema({
-            vol.Required(
-                CONF_API_KEY,
-                default=user_input.get(CONF_API_KEY) if user_input is not None else None,
-            ): str,
-        })
+        DATA_SCHEMA: vol.Schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_API_KEY,
+                    default=user_input.get(CONF_API_KEY) if user_input is not None else None,
+                ): str,
+            }
+        )
 
         if user_input is not None and user_input.get(CONF_CHECK) is not None:
-            DATA_SCHEMA = DATA_SCHEMA.extend({
-                vol.Optional(CONF_CHECK, default=user_input.get(CONF_CHECK)): str,
-            })
+            DATA_SCHEMA = DATA_SCHEMA.extend(
+                {
+                    vol.Optional(CONF_CHECK, default=user_input.get(CONF_CHECK)): str,
+                }
+            )
         else:
-            DATA_SCHEMA = DATA_SCHEMA.extend({
-                vol.Optional(CONF_CHECK): str,
-            })
-        DATA_SCHEMA = DATA_SCHEMA.extend({
-            vol.Optional(
-                CONF_CREATE_BINARY_SENSOR,
-                default=user_input.get(CONF_CREATE_BINARY_SENSOR, DEFAULT_CREATE_BINARY_SENSOR)
-                if user_input is not None
-                else DEFAULT_CREATE_BINARY_SENSOR,
-            ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
-            vol.Optional(
-                CONF_CREATE_SENSOR,
-                default=user_input.get(CONF_CREATE_SENSOR, DEFAULT_CREATE_SENSOR)
-                if user_input is not None
-                else DEFAULT_CREATE_SENSOR,
-            ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
-            vol.Optional(
-                CONF_SELF_HOSTED,
-                default=user_input.get(CONF_SELF_HOSTED, DEFAULT_SELF_HOSTED)
-                if user_input is not None
-                else DEFAULT_SELF_HOSTED,
-            ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
-        })
+            DATA_SCHEMA = DATA_SCHEMA.extend(
+                {
+                    vol.Optional(CONF_CHECK): str,
+                }
+            )
+        DATA_SCHEMA = DATA_SCHEMA.extend(
+            {
+                vol.Optional(
+                    CONF_CREATE_BINARY_SENSOR,
+                    default=user_input.get(CONF_CREATE_BINARY_SENSOR, DEFAULT_CREATE_BINARY_SENSOR)
+                    if user_input is not None
+                    else DEFAULT_CREATE_BINARY_SENSOR,
+                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+                vol.Optional(
+                    CONF_CREATE_SENSOR,
+                    default=user_input.get(CONF_CREATE_SENSOR, DEFAULT_CREATE_SENSOR)
+                    if user_input is not None
+                    else DEFAULT_CREATE_SENSOR,
+                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+                vol.Optional(
+                    CONF_SELF_HOSTED,
+                    default=user_input.get(CONF_SELF_HOSTED, DEFAULT_SELF_HOSTED)
+                    if user_input is not None
+                    else DEFAULT_SELF_HOSTED,
+                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+            }
+        )
 
         return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors=self._errors)
 
@@ -193,20 +198,22 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
             self._errors["base"] = "auth_self"
 
-        SELF_HOSTED_DATA_SCHEMA: vol.Schema = vol.Schema({
-            vol.Required(
-                CONF_SITE_ROOT,
-                default=user_input.get(CONF_SITE_ROOT, DEFAULT_SITE_ROOT)
-                if user_input is not None
-                else DEFAULT_SITE_ROOT,
-            ): str,
-            vol.Optional(
-                CONF_PING_ENDPOINT,
-                default=user_input.get(CONF_PING_ENDPOINT, DEFAULT_PING_ENDPOINT)
-                if user_input is not None
-                else DEFAULT_PING_ENDPOINT,
-            ): str,
-        })
+        SELF_HOSTED_DATA_SCHEMA: vol.Schema = vol.Schema(
+            {
+                vol.Required(
+                    CONF_SITE_ROOT,
+                    default=user_input.get(CONF_SITE_ROOT, DEFAULT_SITE_ROOT)
+                    if user_input is not None
+                    else DEFAULT_SITE_ROOT,
+                ): str,
+                vol.Optional(
+                    CONF_PING_ENDPOINT,
+                    default=user_input.get(CONF_PING_ENDPOINT, DEFAULT_PING_ENDPOINT)
+                    if user_input is not None
+                    else DEFAULT_PING_ENDPOINT,
+                ): str,
+            }
+        )
 
         return self.async_show_form(
             step_id="self_hosted",
