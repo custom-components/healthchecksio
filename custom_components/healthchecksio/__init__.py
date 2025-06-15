@@ -6,22 +6,17 @@ import logging
 
 from homeassistant import config_entries, core
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
+from homeassistant.const import CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
-    CONF_API_KEY,
-    CONF_CHECK_SITE_ROOT,
     CONF_CREATE_BINARY_SENSOR,
     CONF_CREATE_SENSOR,
     CONF_PING_ENDPOINT,
-    CONF_PING_ID,
-    # CONF_SITE_ROOT,
-    # CONF_CHECK,
-    CONF_PING_SITE_ROOT,
-    CONF_SELF_HOSTED,
+    CONF_PING_UUID,
+    CONF_SITE_ROOT,
     DOMAIN,
 )
 from .coordinator import HealthchecksioDataUpdateCoordinator
@@ -35,12 +30,10 @@ async def async_setup_entry(
 ) -> bool:
     """Set up this integration using UI."""
 
-    _LOGGER.debug("config_entry: %s", config_entry)
-    _LOGGER.debug("config_entry.data: %s", config_entry.data)
-    # Get "global" configuration.
-    self_hosted: bool = config_entry.data[CONF_SELF_HOSTED]
-    check_site_root: str = config_entry.data[CONF_CHECK_SITE_ROOT]
-    ping_site_root: str = config_entry.data[CONF_PING_SITE_ROOT]
+    _LOGGER.debug("config_entry data: %s", config_entry.data)
+
+    site_root: str = config_entry.data[CONF_SITE_ROOT]
+    ping_endpoint: str = config_entry.data[CONF_PING_ENDPOINT]
     platforms: list[Platform] = []
     if config_entry.data.get(CONF_CREATE_BINARY_SENSOR):
         platforms.append(Platform.BINARY_SENSOR)
@@ -51,32 +44,23 @@ async def async_setup_entry(
     coordinator: HealthchecksioDataUpdateCoordinator = HealthchecksioDataUpdateCoordinator(
         hass=hass,
         api_key=config_entry.data[CONF_API_KEY],
+        site_root=site_root,
+        ping_endpoint=ping_endpoint,
         ping_session=async_get_clientsession(
             hass=hass,
-            verify_ssl=bool(
-                not self_hosted
-                or (isinstance(ping_site_root, str) and ping_site_root.startswith("https"))
-            ),
+            verify_ssl=ping_endpoint.startswith("https"),
         ),
         check_session=async_get_clientsession(
             hass=hass,
-            verify_ssl=bool(
-                not self_hosted
-                or (isinstance(check_site_root, str) and check_site_root.startswith("https"))
-            ),
+            verify_ssl=site_root.startswith("https"),
         ),
-        self_hosted=self_hosted,
-        ping_id=config_entry.data.get(CONF_PING_ID),
-        ping_site_root=ping_site_root,
-        check_site_root=check_site_root,
-        ping_endpoint=config_entry.data.get(CONF_PING_ENDPOINT),
+        ping_uuid=config_entry.data.get(CONF_PING_UUID),
     )
     config_entry.runtime_data = coordinator
+    _LOGGER.debug("Config Entry: %s", config_entry.as_dict())
 
     await coordinator.async_config_entry_first_refresh()
-
     await hass.config_entries.async_forward_entry_setups(config_entry, platforms)
-    _LOGGER.debug("Config Entry: %s", config_entry.as_dict())
 
     return True
 

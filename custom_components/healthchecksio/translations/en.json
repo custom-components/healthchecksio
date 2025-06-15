@@ -3,10 +3,9 @@
         "step": {
             "user": {
                 "title": "HealthChecks.io",
-                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
                 "data": {
                     "api_key": "API key",
-                    "ping_id": "Ping ID",
+                    "ping_uuid": "Ping UUID",
                     "create_binary_sensor": "Create Binary Sensors",
                     "create_sensor": "Create Sensors",
                     "self_hosted": "Use self-hosted instance"
@@ -14,18 +13,16 @@
             },
             "self_hosted": {
                 "title": "HealthChecks.io self-hosted instance",
-                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
                 "data": {
-                    "check_site_root": "Instance check root URL",
-                    "ping_site_root": "Instance ping root URL",
-                    "ping_endpoint": "Ping endpoint"
+                    "site_root": "Site Root",
+                    "ping_endpoint": "Ping Endpoint"
                 }
             }
         },
         "error": {
-            "auth": "API Key or Ping ID is wrong.",
-            "auth_self": "API Key, Ping ID, Ping Site root, Check site root or Ping endpoint is wrong.",
-            "need_a_sensor": "Must choose to Create Binary Sensor, Sensor or both."
+            "auth": "API Key or Ping UUID is wrong.",
+            "auth_self": "API Key, Ping UUID, Site Root or Ping Endpoint is wrong.",
+            "need_a_sensor": "Must choose to create Binary Sensor, Sensor or both."
         },
         "abort": {
             "single_instance_allowed": "Only a single configuration of HealthChecks.io is allowed."

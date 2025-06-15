@@ -6,16 +6,16 @@ from typing import Any
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import ATTR_ATTRIBUTION, ATTR_NAME, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import generate_entity_id
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
+import homeassistant.helpers.entity_registry as er
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
-    ATTR_ATTRIBUTION,
     ATTR_LAST_PING,
-    ATTR_NAME,
-    ATTR_PING_URL,
     ATTR_STATUS,
     ATTRIBUTION,
     DOMAIN,
@@ -29,6 +29,9 @@ from .coordinator import HealthchecksioDataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
+PLATFORM = Platform.SENSOR
+ENTITY_ID_FORMAT = PLATFORM + ".{}"
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -40,11 +43,11 @@ async def async_setup_entry(
     entities: list[HealthchecksioSensor] = [
         HealthchecksioSensor(
             hass=hass,
-            ping_url=check.get(ATTR_PING_URL),
+            ping_uuid=uuid,
+            name=check.get(ATTR_NAME),
             coordinator=coordinator,
-            config_entry=config_entry,
         )
-        for check in coordinator.data.get("checks", [])
+        for uuid, check in coordinator.data.items()
     ]
     async_add_entities(entities)
 
@@ -55,21 +58,32 @@ class HealthchecksioSensor(CoordinatorEntity, SensorEntity):
     def __init__(
         self,
         hass: HomeAssistant,
-        ping_url: str,
+        ping_uuid: str,
+        name: str,
         coordinator: HealthchecksioDataUpdateCoordinator,
-        config_entry: ConfigEntry,
     ) -> None:
         """Initialize the sensor."""
+        _LOGGER.debug("Initializing sensor")
+        _LOGGER.debug("name: %s", name)
+        _LOGGER.debug("ping_uuid: %s", ping_uuid)
         super().__init__(coordinator)
         self.hass: HomeAssistant = hass
-        self.config_entry: ConfigEntry = config_entry
         self._attr_available = False
-        self._ping_url: str = ping_url
-        self._attr_name: str | None = None
+        self._ping_uuid: str = ping_uuid
+        self._attr_name: str = name
         self._attr_extra_state_attributes: dict[str, Any] = {}
         self._attr_native_value: Any | None = None
         self._attr_icon: str = ICON_DEFAULT
-        self._attr_unique_id: str = ping_url.split("/", maxsplit=1)[-1]
+        self._attr_unique_id: str = f"sensor_{ping_uuid}"
+
+        registry = er.async_get(self.hass)
+        current_entity_id = registry.async_get_entity_id(PLATFORM, DOMAIN, self._attr_unique_id)
+        if current_entity_id is not None:
+            self.entity_id = current_entity_id
+        else:
+            self.entity_id = generate_entity_id(
+                ENTITY_ID_FORMAT, f"healthchecksio_{name}", hass=self.hass
+            )
 
         self._attr_device_info: DeviceInfo | None = {
             "identifiers": {(DOMAIN, coordinator.config_entry.entry_id)},
@@ -77,22 +91,26 @@ class HealthchecksioSensor(CoordinatorEntity, SensorEntity):
             "manufacturer": "SIA Monkey See Monkey Do",
         }
 
+    async def async_added_to_hass(self) -> None:
+        """Run once integration has been added to HA."""
+        await super().async_added_to_hass()
+        self._handle_coordinator_update()
+
     @callback
     def _handle_coordinator_update(self) -> None:
         """Update the sensor."""
-        checks = self.coordinator.data.get("checks", [])
-        check = None
-        for chk in checks:
-            if chk.get(ATTR_PING_URL, "").split("/", maxsplit=1)[-1] == self._attr_unique_id:
-                check = chk
-                break
+        _LOGGER.debug("Updating: %s", self._attr_name)
+        checks: MutableMapping[str, Any] = self.coordinator.data
+        # _LOGGER.debug("checks: %s", checks)
+        check: MutableMapping[str, Any] | None = checks.get(self._ping_uuid)
+        # _LOGGER.debug("check: %s", check)
         if not check:
             self._attr_available = False
             self.async_write_ha_state()
             return
 
         self._attr_available = True
-        self._attr_name = check.get(ATTR_NAME)
+        self._attr_name = check.get(ATTR_NAME) or self._attr_name
         self._attr_native_value = check.get(ATTR_STATUS)
         self._attr_extra_state_attributes[ATTR_ATTRIBUTION] = ATTRIBUTION
         self._attr_extra_state_attributes[ATTR_LAST_PING] = check.get(ATTR_LAST_PING)

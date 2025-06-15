@@ -4,34 +4,32 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import MutableMapping
-import json
 import logging
+import re
 from typing import Any
+from urllib.parse import ParseResult, urlparse, urlunparse
 
-import aiohttp
-from aiohttp import ClientError
+from aiohttp import ClientError, ClientSession, ClientTimeout
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.const import CONF_API_KEY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import selector
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
-    CONF_API_KEY,
-    CONF_CHECK_SITE_ROOT,
     CONF_CREATE_BINARY_SENSOR,
     CONF_CREATE_SENSOR,
     CONF_PING_ENDPOINT,
-    CONF_PING_ID,
-    CONF_PING_SITE_ROOT,
+    CONF_PING_UUID,
     CONF_SELF_HOSTED,
-    DEFAULT_CHECK_SITE_ROOT,
+    CONF_SITE_ROOT,
     DEFAULT_CREATE_BINARY_SENSOR,
     DEFAULT_CREATE_SENSOR,
     DEFAULT_PING_ENDPOINT,
-    DEFAULT_PING_SITE_ROOT,
     DEFAULT_SELF_HOSTED,
+    DEFAULT_SITE_ROOT,
     DOMAIN,
 )
 
@@ -41,25 +39,20 @@ _LOGGER: logging.Logger = logging.getLogger(__name__)
 async def _test_credentials(
     hass: HomeAssistant,
     api_key: str,
-    ping_id: str,
-    self_hosted: bool,
-    ping_site_root: str,
-    check_site_root: str,
-    ping_endpoint: str | None,
+    site_root: str,
+    ping_endpoint: str,
+    ping_uuid: str | None = None,
 ) -> bool:
     """Return true if credentials are valid."""
     _LOGGER.debug("Testing Credentials")
-    ping_verify_ssl: bool = not self_hosted or ping_site_root.startswith("https")
-    ping_session: aiohttp.ClientSession = async_get_clientsession(hass, ping_verify_ssl)
-    check_verify_ssl: bool = not self_hosted or check_site_root.startswith("https")
-    check_session: aiohttp.ClientSession = async_get_clientsession(hass, check_verify_ssl)
-    timeout10: aiohttp.ClientTimeout = aiohttp.ClientTimeout(total=10)
+    check_verify_ssl: bool = site_root.startswith("https")
+    check_session: ClientSession = async_get_clientsession(hass, check_verify_ssl)
+    timeout10: ClientTimeout = ClientTimeout(total=10)
     headers: MutableMapping[str, Any] = {"X-Api-Key": api_key}
-    if ping_id is not None:
-        if self_hosted:
-            ping_url: str = f"{ping_site_root}/{ping_endpoint}/{ping_id}"
-        else:
-            ping_url = f"https://hc-ping.com/{ping_id}"
+    if ping_uuid is not None:
+        ping_verify_ssl: bool = ping_endpoint.startswith("https")
+        ping_session: ClientSession = async_get_clientsession(hass, ping_verify_ssl)
+        ping_url: str = f"{ping_endpoint}/{ping_uuid}"
         _LOGGER.debug("ping_url: %s", ping_url)
         await asyncio.sleep(1)  # needed for self-hosted instances
 
@@ -84,18 +77,11 @@ async def _test_credentials(
 
     try:
         data = await check_session.get(
-            f"{check_site_root}/api/v1/checks/", headers=headers, timeout=timeout10
+            f"{site_root}/api/v1/checks/", headers=headers, timeout=timeout10
         )
-    except (TimeoutError, aiohttp.ClientError) as e:
+    except (TimeoutError, ClientError) as e:
         _LOGGER.error(
             "Could Not Update Data. %s: %s",
-            e.__class__.__qualname__,
-            e,
-        )
-        return False
-    except (ValueError, json.decoder.JSONDecodeError) as e:
-        _LOGGER.error(
-            "Data JSON Decode Error. %s: %s",
             e.__class__.__qualname__,
             e,
         )
@@ -106,6 +92,21 @@ async def _test_credentials(
             return False
         _LOGGER.debug("Get Data HTTP Status Code: %s", data.status)
         return True
+
+
+def _clean_url(url: str) -> str:
+    """Cleanup slashes from URL."""
+    parsed: ParseResult = urlparse(url)
+
+    if not parsed.scheme:
+        parsed = urlparse("https://" + url)
+
+    cleaned_path: str = re.sub(r"/+", "/", parsed.path)
+    if cleaned_path != "/":
+        cleaned_path = cleaned_path.rstrip("/")
+
+    cleaned: ParseResult = parsed._replace(path=cleaned_path)
+    return urlunparse(cleaned)
 
 
 class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -138,21 +139,19 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
                 self.initial_data = user_input
                 return await self.async_step_self_hosted()
             else:
-                user_input[CONF_CHECK_SITE_ROOT] = DEFAULT_CHECK_SITE_ROOT
-                user_input[CONF_PING_SITE_ROOT] = DEFAULT_PING_SITE_ROOT
+                user_input[CONF_SITE_ROOT] = DEFAULT_SITE_ROOT
+                user_input[CONF_PING_ENDPOINT] = DEFAULT_PING_ENDPOINT
+                user_input[CONF_SELF_HOSTED] = False
                 valid: bool = await _test_credentials(
                     hass=self.hass,
-                    api_key=user_input.get(CONF_API_KEY, ""),
-                    ping_id=user_input.get(CONF_PING_ID, ""),
-                    self_hosted=False,
-                    ping_site_root=user_input.get(CONF_PING_SITE_ROOT, ""),
-                    check_site_root=user_input.get(CONF_CHECK_SITE_ROOT, ""),
-                    ping_endpoint=None,
+                    api_key=user_input[CONF_API_KEY],
+                    site_root=user_input[CONF_SITE_ROOT],
+                    ping_endpoint=user_input[CONF_PING_ENDPOINT],
+                    ping_uuid=user_input.get(CONF_PING_UUID),
                 )
                 if valid:
-                    user_input[CONF_SELF_HOSTED] = False
                     return self.async_create_entry(
-                        title=user_input.get(CONF_PING_ID, DOMAIN), data=user_input
+                        title=user_input.get(CONF_PING_UUID, DOMAIN), data=user_input
                     )
                 self._errors["base"] = "auth"
 
@@ -165,16 +164,16 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
             }
         )
 
-        if user_input is not None and user_input.get(CONF_PING_ID) is not None:
+        if user_input is not None and user_input.get(CONF_PING_UUID) is not None:
             DATA_SCHEMA = DATA_SCHEMA.extend(
                 {
-                    vol.Optional(CONF_PING_ID, default=user_input.get(CONF_PING_ID)): str,
+                    vol.Optional(CONF_PING_UUID, default=user_input.get(CONF_PING_UUID)): str,
                 }
             )
         else:
             DATA_SCHEMA = DATA_SCHEMA.extend(
                 {
-                    vol.Optional(CONF_PING_ID): str,
+                    vol.Optional(CONF_PING_UUID): str,
                 }
             )
         DATA_SCHEMA = DATA_SCHEMA.extend(
@@ -206,42 +205,36 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the step for a self-hosted instance."""
         self._errors = {}
         if user_input is not None:
+            user_input[CONF_SITE_ROOT] = _clean_url(user_input[CONF_SITE_ROOT])
+            if user_input.get(CONF_PING_ENDPOINT) is None:
+                user_input[CONF_PING_ENDPOINT] = f"{user_input.get(CONF_SITE_ROOT)}/ping"
+            user_input[CONF_PING_ENDPOINT] = _clean_url(user_input[CONF_PING_ENDPOINT])
             valid: bool = await _test_credentials(
                 hass=self.hass,
-                api_key=self.initial_data.get(CONF_API_KEY, ""),
-                ping_id=self.initial_data.get(CONF_PING_ID, ""),
-                self_hosted=True,
-                ping_site_root=user_input.get(CONF_PING_SITE_ROOT, ""),
-                check_site_root=user_input.get(CONF_CHECK_SITE_ROOT, ""),
-                ping_endpoint=user_input.get(CONF_PING_ENDPOINT),
+                api_key=self.initial_data[CONF_API_KEY],
+                site_root=user_input[CONF_SITE_ROOT],
+                ping_endpoint=user_input[CONF_PING_ENDPOINT],
+                ping_uuid=self.initial_data.get(CONF_PING_UUID),
             )
             if valid:
                 # merge data from initial config flow and this flow
                 data: MutableMapping[str, Any] = {**self.initial_data, **user_input}
                 return self.async_create_entry(
-                    title=self.initial_data.get(CONF_PING_ID, DOMAIN), data=data
+                    title=self.initial_data.get(CONF_PING_UUID, DOMAIN), data=data
                 )
             self._errors["base"] = "auth_self"
 
         SELF_HOSTED_DATA_SCHEMA: vol.Schema = vol.Schema(
             {
                 vol.Required(
-                    CONF_PING_SITE_ROOT,
-                    default=user_input.get(CONF_PING_SITE_ROOT, DEFAULT_PING_SITE_ROOT)
+                    CONF_SITE_ROOT,
+                    default=user_input.get(CONF_SITE_ROOT, DEFAULT_SITE_ROOT)
                     if user_input is not None
-                    else DEFAULT_PING_SITE_ROOT,
-                ): str,
-                vol.Required(
-                    CONF_CHECK_SITE_ROOT,
-                    default=user_input.get(CONF_CHECK_SITE_ROOT, DEFAULT_CHECK_SITE_ROOT)
-                    if user_input is not None
-                    else DEFAULT_CHECK_SITE_ROOT,
+                    else DEFAULT_SITE_ROOT,
                 ): str,
                 vol.Optional(
                     CONF_PING_ENDPOINT,
-                    default=user_input.get(CONF_PING_ENDPOINT, DEFAULT_PING_ENDPOINT)
-                    if user_input is not None
-                    else DEFAULT_PING_ENDPOINT,
+                    default=user_input.get(CONF_PING_ENDPOINT) if user_input is not None else None,
                 ): str,
             }
         )
