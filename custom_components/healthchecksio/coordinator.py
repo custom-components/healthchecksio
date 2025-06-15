@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import MutableMapping
+from json import JSONDecodeError
 import logging
 from typing import TYPE_CHECKING, Any
 
@@ -27,15 +29,12 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(
         self,
         hass: HomeAssistant,
-        *,
         api_key: str,
         ping_session: ClientSession,
         check_session: ClientSession,
-        self_hosted: bool = False,
-        ping_id: str | None = None,
-        ping_site_root: str,
-        check_site_root: str,
-        ping_endpoint: str | None = None,
+        site_root: str,
+        ping_endpoint: str,
+        ping_uuid: str | None = None,
     ) -> None:
         """Initialize coordinator."""
         super().__init__(
@@ -45,22 +44,16 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=MIN_TIME_BETWEEN_UPDATES,
         )
         self._api_key: str = api_key
-        self._ping_site_root: str | None = ping_site_root
-        self._check_site_root: str | None = check_site_root
+        self._site_root: str = site_root
+        self._ping_endpoint: str = ping_endpoint
         self._ping_session: ClientSession = ping_session
         self._check_session: ClientSession = check_session
-        self._self_hosted: bool = self_hosted
-        self._ping_id: str | None = ping_id
-        self._ping_endpoint: str | None = ping_endpoint
+        self._ping_uuid: str | None = ping_uuid
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Update data."""
-        if self._ping_id:
-            ping_url: str = (
-                f"https://hc-ping.com/{self._ping_id}"
-                if not self._self_hosted
-                else f"{self._ping_site_root}/{self._ping_endpoint}/{self._ping_id}"
-            )
+        if self._ping_uuid:
+            ping_url: str = f"{self._ping_endpoint}/{self._ping_uuid}"
             _LOGGER.debug("ping_url: %s", ping_url)
 
             try:
@@ -68,7 +61,7 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
                     ping_url,
                     timeout=ClientTimeout(total=10),
                 )
-            except ClientError as e:
+            except (TimeoutError, ClientError) as e:
                 _LOGGER.error(
                     "Could Not Send Ping using URL: %s. %s: %s",
                     ping_url,
@@ -77,9 +70,9 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
                 )
             _LOGGER.debug("Send Ping Ok")
         else:
-            _LOGGER.debug("Ping ID not set, skipping")
+            _LOGGER.debug("Ping UUID not set, skipping")
 
-        get_checks_url: str = f"{self._check_site_root}/api/v1/checks/"
+        get_checks_url: str = f"{self._site_root}/api/v1/checks/"
         _LOGGER.debug("get_checks_url: %s", get_checks_url)
         try:
             data = await self._check_session.get(
@@ -88,8 +81,8 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
                 timeout=ClientTimeout(total=10),
             )
             check_data = await data.json()
-            _LOGGER.debug("check_data: %s", check_data)
-        except ClientError as e:
+            # _LOGGER.debug("check_data: %s", check_data)
+        except (TimeoutError, ClientError) as e:
             _LOGGER.error(
                 "Update Checks Failed with URL: %s. %s: %s",
                 get_checks_url,
@@ -97,5 +90,19 @@ class HealthchecksioDataUpdateCoordinator(DataUpdateCoordinator):
                 e,
             )
             raise UpdateFailed(e) from e
-        else:
-            return check_data
+        except (ValueError, JSONDecodeError) as e:
+            _LOGGER.error(
+                "Data JSON Decode Error. %s: %s",
+                e.__class__.__qualname__,
+                e,
+            )
+            raise UpdateFailed(e) from e
+        if not isinstance(check_data, MutableMapping):
+            _LOGGER.error("Update Checks Failed, unable to parse data")
+            raise UpdateFailed("Update Checks Failed, unable to parse data")
+        check_dict: dict[str, Any] = {}
+        for check in check_data.get("checks", []):
+            if check.get("uuid"):
+                check_dict[check.get("uuid")] = check
+        # _LOGGER.debug("check_dict: %s", check_dict)
+        return check_dict
