@@ -109,6 +109,66 @@ def _clean_url(url: str) -> str:
     return urlunparse(cleaned)
 
 
+def _build_user_input_schema(
+    user_input: MutableMapping[str, Any] | None, fallback: MutableMapping[str, Any] = {}
+) -> vol.Schema:
+    if user_input is None:
+        user_input = {}
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_API_KEY,
+                default=user_input.get(CONF_API_KEY, fallback.get(CONF_API_KEY, "")),
+            ): str,
+            vol.Optional(
+                CONF_PING_UUID,
+                default=user_input.get(CONF_PING_UUID, fallback.get(CONF_PING_UUID, "")),
+            ): str,
+            vol.Optional(
+                CONF_CREATE_BINARY_SENSOR,
+                default=user_input.get(
+                    CONF_CREATE_BINARY_SENSOR,
+                    fallback.get(CONF_CREATE_BINARY_SENSOR, DEFAULT_CREATE_BINARY_SENSOR),
+                ),
+            ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+            vol.Optional(
+                CONF_CREATE_SENSOR,
+                default=user_input.get(
+                    CONF_CREATE_SENSOR, fallback.get(CONF_CREATE_SENSOR, DEFAULT_CREATE_SENSOR)
+                ),
+            ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+            vol.Optional(
+                CONF_SELF_HOSTED,
+                default=user_input.get(
+                    CONF_SELF_HOSTED, fallback.get(CONF_SELF_HOSTED, DEFAULT_SELF_HOSTED)
+                ),
+            ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
+        }
+    )
+
+
+def _build_self_hosted_schema(
+    user_input: MutableMapping[str, Any] | None, fallback: MutableMapping[str, Any] = {}
+) -> vol.Schema:
+    if user_input is None:
+        user_input = {}
+
+    return vol.Schema(
+        {
+            vol.Required(
+                CONF_SITE_ROOT,
+                default=user_input.get(
+                    CONF_SITE_ROOT, fallback.get(CONF_SITE_ROOT, DEFAULT_SITE_ROOT)
+                ),
+            ): str,
+            vol.Optional(
+                CONF_PING_ENDPOINT,
+                default=user_input.get(CONF_PING_ENDPOINT, fallback.get(CONF_PING_ENDPOINT, "")),
+            ): str,
+        }
+    )
+
+
 class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
     """Config flow for HealthChecks.io integration."""
 
@@ -155,51 +215,11 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
                     )
                 self._errors["base"] = "auth"
 
-        DATA_SCHEMA: vol.Schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_API_KEY,
-                    default=user_input.get(CONF_API_KEY) if user_input is not None else None,
-                ): str,
-            }
+        return self.async_show_form(
+            step_id="user",
+            data_schema=_build_user_input_schema(user_input=user_input),
+            errors=self._errors,
         )
-
-        if user_input is not None and user_input.get(CONF_PING_UUID) is not None:
-            DATA_SCHEMA = DATA_SCHEMA.extend(
-                {
-                    vol.Optional(CONF_PING_UUID, default=user_input.get(CONF_PING_UUID)): str,
-                }
-            )
-        else:
-            DATA_SCHEMA = DATA_SCHEMA.extend(
-                {
-                    vol.Optional(CONF_PING_UUID): str,
-                }
-            )
-        DATA_SCHEMA = DATA_SCHEMA.extend(
-            {
-                vol.Optional(
-                    CONF_CREATE_BINARY_SENSOR,
-                    default=user_input.get(CONF_CREATE_BINARY_SENSOR, DEFAULT_CREATE_BINARY_SENSOR)
-                    if user_input is not None
-                    else DEFAULT_CREATE_BINARY_SENSOR,
-                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
-                vol.Optional(
-                    CONF_CREATE_SENSOR,
-                    default=user_input.get(CONF_CREATE_SENSOR, DEFAULT_CREATE_SENSOR)
-                    if user_input is not None
-                    else DEFAULT_CREATE_SENSOR,
-                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
-                vol.Optional(
-                    CONF_SELF_HOSTED,
-                    default=user_input.get(CONF_SELF_HOSTED, DEFAULT_SELF_HOSTED)
-                    if user_input is not None
-                    else DEFAULT_SELF_HOSTED,
-                ): selector.BooleanSelector(selector.BooleanSelectorConfig()),
-            }
-        )
-
-        return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors=self._errors)
 
     async def async_step_self_hosted(self, user_input: MutableMapping[str, Any] | None = None):
         """Handle the step for a self-hosted instance."""
@@ -224,23 +244,8 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
                 )
             self._errors["base"] = "auth_self"
 
-        SELF_HOSTED_DATA_SCHEMA: vol.Schema = vol.Schema(
-            {
-                vol.Required(
-                    CONF_SITE_ROOT,
-                    default=user_input.get(CONF_SITE_ROOT, DEFAULT_SITE_ROOT)
-                    if user_input is not None
-                    else DEFAULT_SITE_ROOT,
-                ): str,
-                vol.Optional(
-                    CONF_PING_ENDPOINT,
-                    default=user_input.get(CONF_PING_ENDPOINT) if user_input is not None else None,
-                ): str,
-            }
-        )
-
         return self.async_show_form(
             step_id="self_hosted",
-            data_schema=SELF_HOSTED_DATA_SCHEMA,
+            data_schema=_build_self_hosted_schema(user_input=user_input),
             errors=self._errors,
         )
