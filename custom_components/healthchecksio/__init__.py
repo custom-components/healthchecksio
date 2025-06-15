@@ -12,10 +12,16 @@ from homeassistant.helpers import entity_platform
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
+    CONF_API_KEY,
+    CONF_CHECK_SITE_ROOT,
     CONF_CREATE_BINARY_SENSOR,
     CONF_CREATE_SENSOR,
+    CONF_PING_ENDPOINT,
+    CONF_PING_ID,
+    # CONF_SITE_ROOT,
+    # CONF_CHECK,
+    CONF_PING_SITE_ROOT,
     CONF_SELF_HOSTED,
-    CONF_SITE_ROOT,
     DEFAULT_SELF_HOSTED,
     DOMAIN,
 )
@@ -30,9 +36,12 @@ async def async_setup_entry(
 ) -> bool:
     """Set up this integration using UI."""
 
+    _LOGGER.debug("config_entry: %s", config_entry)
+    _LOGGER.debug("config_entry.data: %s", config_entry.data)
     # Get "global" configuration.
     self_hosted: bool = config_entry.data.get(CONF_SELF_HOSTED, DEFAULT_SELF_HOSTED)
-    site_root: str | None = config_entry.data.get(CONF_SITE_ROOT)
+    check_site_root: str = config_entry.data.get(CONF_CHECK_SITE_ROOT)
+    ping_site_root: str = config_entry.data.get(CONF_PING_SITE_ROOT)
     platforms: list[Platform] = []
     if config_entry.data.get(CONF_CREATE_BINARY_SENSOR):
         platforms.append(Platform.BINARY_SENSOR)
@@ -42,17 +51,26 @@ async def async_setup_entry(
     # Configure the client.
     coordinator: HealthchecksioDataUpdateCoordinator = HealthchecksioDataUpdateCoordinator(
         hass=hass,
-        api_key=config_entry.data["api_key"],
-        session=async_get_clientsession(
+        api_key=config_entry.data.get(CONF_API_KEY),
+        ping_session=async_get_clientsession(
             hass=hass,
             verify_ssl=bool(
-                not self_hosted or (isinstance(site_root, str) and site_root.startswith("https"))
+                not self_hosted
+                or (isinstance(ping_site_root, str) and ping_site_root.startswith("https"))
+            ),
+        ),
+        check_session=async_get_clientsession(
+            hass=hass,
+            verify_ssl=bool(
+                not self_hosted
+                or (isinstance(check_site_root, str) and check_site_root.startswith("https"))
             ),
         ),
         self_hosted=self_hosted,
-        check_id=config_entry.data["check"],
-        site_root=site_root,
-        ping_endpoint=config_entry.data.get("ping_endpoint"),
+        ping_id=config_entry.data.get(CONF_PING_ID),
+        ping_site_root=ping_site_root,
+        check_site_root=check_site_root,
+        ping_endpoint=config_entry.data.get(CONF_PING_ENDPOINT),
     )
     config_entry.runtime_data = coordinator
 
