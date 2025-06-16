@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant import config_entries, core
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
@@ -29,8 +28,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
 ) -> bool:
     """Set up this integration using UI."""
-
-    _LOGGER.debug("config_entry data: %s", config_entry.data)
+    _LOGGER.debug("Config Entry: %s", config_entry.as_dict())
 
     site_root: str = config_entry.data[CONF_SITE_ROOT]
     ping_endpoint: str = config_entry.data[CONF_PING_ENDPOINT]
@@ -57,7 +55,6 @@ async def async_setup_entry(
         ping_uuid=config_entry.data.get(CONF_PING_UUID),
     )
     config_entry.runtime_data = coordinator
-    _LOGGER.debug("Config Entry: %s", config_entry.as_dict())
 
     await coordinator.async_config_entry_first_refresh()
     await hass.config_entries.async_forward_entry_setups(config_entry, platforms)
@@ -66,29 +63,34 @@ async def async_setup_entry(
 
 
 async def async_unload_entry(
-    hass: core.HomeAssistant,
-    config_entry: config_entries.ConfigEntry,
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
 ) -> bool:
     """Unload a config entry."""
     _LOGGER.debug("Unloading Config Entry: %s", config_entry.as_dict())
-    curr_plat = [
+    curr_plat: list[str] = [
         p.domain
         for p in entity_platform.async_get_platforms(hass, DOMAIN)
-        if (
-            p.config_entry is not None
-            and config_entry.entry_id == p.config_entry.entry_id
-            and p.config_entry.state == config_entries.ConfigEntryState.LOADED
-        )
+        if p.config_entry is not None and config_entry.entry_id == p.config_entry.entry_id
     ]
 
-    _LOGGER.debug("Unloading Platforms: %s", curr_plat)
-    unload_ok = True
     if curr_plat:
-        unload_ok = await hass.config_entries.async_unload_platforms(
-            config_entry,
-            curr_plat,
-        )
+        _LOGGER.debug("Unloading Platforms: %s", curr_plat)
+        try:
+            unload_ok = await hass.config_entries.async_unload_platforms(
+                config_entry,
+                curr_plat,
+            )
+        except ValueError as e:
+            unload_ok = False
+            _LOGGER.error(
+                "Unable to unload platforms. %s: %s",
+                e.__class__.__qualname__,
+                e,
+            )
+    else:
+        unload_ok = False
+        _LOGGER.error("Unable to identify platforms to unload")
     if unload_ok:
         _LOGGER.info("Successfully removed the HealthChecks.io integration")
-
     return unload_ok

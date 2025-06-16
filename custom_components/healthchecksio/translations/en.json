@@ -17,15 +17,35 @@
                     "site_root": "Site Root",
                     "ping_endpoint": "Ping Endpoint"
                 }
+            },
+            "reconfigure": {
+                "title": "HealthChecks.io",
+                "description": "**API Key:&nbsp;{api_key}**",
+                "data": {
+                    "ping_uuid": "Ping UUID",
+                    "create_binary_sensor": "Create Binary Sensors",
+                    "create_sensor": "Create Sensors",
+                    "self_hosted": "Use self-hosted instance"
+                }
+            },
+            "reconfigure_self_hosted": {
+                "title": "HealthChecks.io self-hosted instance",
+                "data": {
+                    "site_root": "Site Root",
+                    "ping_endpoint": "Ping Endpoint"
+                }
             }
         },
         "error": {
-            "auth": "API Key or Ping UUID is wrong.",
-            "auth_self": "API Key, Ping UUID, Site Root or Ping Endpoint is wrong.",
-            "need_a_sensor": "Must choose to create Binary Sensor, Sensor or both."
+            "auth": "API Key or Ping UUID is wrong",
+            "auth_self": "API Key, Ping UUID, Site Root or Ping Endpoint is wrong",
+            "need_a_sensor": "Must choose to create Binary Sensor, Sensor or both"
         },
         "abort": {
-            "single_instance_allowed": "Only a single configuration of HealthChecks.io is allowed."
+            "already_configured": "Already Configured",
+            "reconfigure_successful": "Reconfiguration Successful",
+            "single_instance_allowed": "Only a single configuration of HealthChecks.io is allowed",
+            "unique_id_mismatch": "Unique ID Mismatch"
         }
     }
 }
