@@ -1,4 +1,4 @@
-# healthchecksio
+# HealthChecks.io Home Assistant Integration (by Snuffy2)
 
 [![GitHub Release][releases-shield]][releases]
 [![GitHub Activity][commits-shield]][commits]
@@ -8,14 +8,14 @@
 
 _Integration to integrate with [healthchecks.io][healthchecksio]_
 
-![example][exampleimg]
+![exampleimg]
 
 ## HACS Installation
 
 In HACS, add this as a custom repository: 
 `https://github.com/Snuffy2/healthchecksio`
 
-Search for and install `healthchecksio` (the one by @Snuffy2) from [HACS](https://hacs.xyz/)
+Search for and install `HealthChecks.io (by Snuffy2)` from [HACS](https://hacs.xyz/)
 
 ## Configuration
 

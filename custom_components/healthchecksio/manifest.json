@@ -1,6 +1,6 @@
 {
   "domain": "healthchecksio",
-  "name": "HealthChecks.io",
+  "name": "HealthChecks.io (by Snuffy2)",
   "codeowners": ["@Snuffy2"],
   "config_flow": true,
   "dependencies": [],
