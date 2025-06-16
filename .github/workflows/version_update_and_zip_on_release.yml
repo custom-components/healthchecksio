@@ -26,13 +26,6 @@ jobs:
         if: ${{ github.event_name == 'release' && github.event.release.draft == false }}
         run: |
           sed -i 's/^VERSION \= \".*\"/VERSION \= \"${{ github.ref_name }}\"/' ./custom_components/healthchecksio/const.py
-      - name: Update Changelog
-        if: ${{ github.event_name == 'release' && github.event.release.draft == false && github.event.release.prerelease == false  }}
-        uses: rhysd/changelog-from-release/action@v3
-        with:
-          file: CHANGELOG.md
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          commit: false
       - name: Commit & Push Version Changes
         if: ${{ github.event_name == 'release' && github.event.release.draft == false && github.event.release.prerelease == false  }}
         uses: actions-js/push@master
@@ -45,15 +38,6 @@ jobs:
         run: |
           git tag -f ${{ github.ref_name }}
           git push -f origin ${{ github.ref_name }}
-      - name: Extract Firmware Variables from const.py
-        if: ${{ github.event_name == 'release' && github.event.release.draft == false }}
-        id: extract_variables
-        run: |
-          OPNSENSE_LTD_FIRMWARE="$(grep 'OPNSENSE_LTD_FIRMWARE' custom_components/healthchecksio/const.py | cut -d '"' -f2)"
-          OPNSENSE_MIN_FIRMWARE="$(grep 'OPNSENSE_MIN_FIRMWARE' custom_components/healthchecksio/const.py | cut -d '"' -f2)"
-          echo "OPNSENSE_LTD_FIRMWARE=$OPNSENSE_LTD_FIRMWARE" >> "$GITHUB_ENV"
-          echo "OPNSENSE_MIN_FIRMWARE=$OPNSENSE_MIN_FIRMWARE" >> "$GITHUB_ENV"
-
       - name: Create Zip
         uses: thedoctor0/zip-release@0.7.6
         with:
