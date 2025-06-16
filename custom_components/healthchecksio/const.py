@@ -11,7 +11,7 @@ MIN_TIME_BETWEEN_UPDATES = timedelta(seconds=300)
 # Base component constants
 DOMAIN = "healthchecksio"
 INTEGRATION_NAME = "HealthChecks.io"
-VERSION = "0.0.0"
+VERSION = "v1.0.1"
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
 ATTRIBUTION = "Data is provided by HealthChecks.io."
