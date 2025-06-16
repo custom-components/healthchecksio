@@ -6,44 +6,57 @@
 
 [![hacs][hacsbadge]](hacs)
 
-_Integration to integrate with [healthchecks.io][healthchecksio]._
+_Integration to integrate with [healthchecks.io][healthchecksio]_
 
 ![example][exampleimg]
 
-## Installation
+## HACS Installation
 
-Search for and install `healthchecksio` from [HACS](https://hacs.xyz/)
+In HACS, add this as a custom repository: 
+`https://github.com/Snuffy2/healthchecksio`
+
+Search for and install `healthchecksio` (the one by @Snuffy2) from [HACS](https://hacs.xyz/)
 
 ## Configuration
 
-This integration can **only** be configured via the UI.
+This integration can **only** be configured via the UI
 
-### Check ID
-
-This is the ID of the check that the integration should update. It looks something like `aa247c51-8da8-4800-86a3-48763142e902`.
-
-### What the integration does
-
-- Pings the specified Healthchecks.io check every 5 minutes to monitor the state of Home Assistant.
-- Pulls your other Healthchecks.io checks as entities, so you can monitor their statuses directly in Home Assistant.
 
 ### API Key
 
-The API key to your account. You can find it under the "Settings" tab in your project.
+The API key to your account. You can find it under the "Settings" tab in your project
 
-> [!NOTE]
 > A **Full Access** API key is required for this integration to function correctly. This is because the integration both pings checks (which requires write access) and reads the status of all your checks to create entities in Home Assistant (which requires read access). Only the Full Access key provides both permissions needed for these operations.
 
+### Ping UUID
+
+_Optional._ This is the ID of the check that the integration should update. It looks something like `aa247c51-8da8-4800-86a3-48763142e902`
+
+### Create Binary Sensors and/or Sensors
+
+Must select one of these (or both)
 
 ## For self-hosted instances
 
 ### Site Root
 
-This is the root URL of your Healthchecks.io instance.
+This is the root URL of your Healthchecks.io instance
 
 ### Ping Endpoint
 
-This is the path of the endpoint used for pings.
+_Optional._ This is the path of the endpoint used for pings. If not set, defaults to: `site_root + /ping`
+
+## What the integration does
+
+* If Ping UUID is set, pings the specified Healthchecks.io check every 5 minutes to monitor the state of Home Assistant
+
+* Pulls your other Healthchecks.io checks as entities, so you can monitor their statuses directly in Home Assistant
+
+## Prior Contributions:
+
+* Forked from [custom-components/healthchecksio](https://github.com/custom-components/healthchecksio)
+
+* Current Author: [Snuffy2](https://github.com/Snuffy2)
 
 ## Contributions are welcome!
 
