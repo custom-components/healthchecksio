@@ -16,7 +16,6 @@ PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
 ATTRIBUTION = "Data is provided by HealthChecks.io."
 
-ATTR_CHECKS = "checks"
 ATTR_LAST_PING = "last_ping"
 ATTR_STATUS = "status"
 

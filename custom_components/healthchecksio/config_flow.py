@@ -5,9 +5,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Mapping, MutableMapping
 import logging
-import re
 from typing import Any
-from urllib.parse import ParseResult, urlparse, urlunparse
 
 from aiohttp import ClientError, ClientSession, ClientTimeout
 import voluptuous as vol
@@ -33,6 +31,7 @@ from .const import (
     DOMAIN,
     INTEGRATION_NAME,
 )
+from .helpers import clean_url
 
 _LOGGER: logging.Logger = logging.getLogger(__name__)
 
@@ -93,21 +92,6 @@ async def _test_credentials(
             return False
         _LOGGER.debug("Get Data HTTP Status Code: %s", data.status)
         return True
-
-
-def _clean_url(url: str) -> str:
-    """Cleanup slashes from URL."""
-    parsed: ParseResult = urlparse(url)
-
-    if not parsed.scheme:
-        parsed = urlparse("https://" + url)
-
-    cleaned_path: str = re.sub(r"/+", "/", parsed.path)
-    if cleaned_path != "/":
-        cleaned_path = cleaned_path.rstrip("/")
-
-    cleaned: ParseResult = parsed._replace(path=cleaned_path)
-    return urlunparse(cleaned)
 
 
 def _build_user_input_schema(
@@ -188,7 +172,7 @@ def _build_self_hosted_schema(
 class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
     """Config flow for HealthChecks.io integration."""
 
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:
         """Initialize the config flow."""
@@ -247,10 +231,10 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the step for a self-hosted instance."""
         self._errors = {}
         if user_input is not None:
-            user_input[CONF_SITE_ROOT] = _clean_url(user_input[CONF_SITE_ROOT])
+            user_input[CONF_SITE_ROOT] = clean_url(user_input[CONF_SITE_ROOT])
             if user_input.get(CONF_PING_ENDPOINT) is None:
                 user_input[CONF_PING_ENDPOINT] = f"{user_input.get(CONF_SITE_ROOT)}/ping"
-            user_input[CONF_PING_ENDPOINT] = _clean_url(user_input[CONF_PING_ENDPOINT])
+            user_input[CONF_PING_ENDPOINT] = clean_url(user_input[CONF_PING_ENDPOINT])
             valid: bool = await _test_credentials(
                 hass=self.hass,
                 api_key=self._initial_data[CONF_API_KEY],
@@ -328,10 +312,10 @@ class HealthchecksioConfigFlow(ConfigFlow, domain=DOMAIN):
         """Handle the reconfigure step for a self-hosted instance."""
         self._errors = {}
         if user_input is not None:
-            user_input[CONF_SITE_ROOT] = _clean_url(user_input[CONF_SITE_ROOT])
+            user_input[CONF_SITE_ROOT] = clean_url(user_input[CONF_SITE_ROOT])
             if user_input.get(CONF_PING_ENDPOINT) is None:
                 user_input[CONF_PING_ENDPOINT] = f"{user_input.get(CONF_SITE_ROOT)}/ping"
-            user_input[CONF_PING_ENDPOINT] = _clean_url(user_input[CONF_PING_ENDPOINT])
+            user_input[CONF_PING_ENDPOINT] = clean_url(user_input[CONF_PING_ENDPOINT])
             valid: bool = await _test_credentials(
                 hass=self.hass,
                 api_key=self._initial_data[CONF_API_KEY],
