@@ -7,7 +7,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_API_KEY, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import entity_platform, entity_registry as er
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
@@ -19,7 +19,6 @@ from .const import (
     CONF_SITE_ROOT,
     DEFAULT_PING_ENDPOINT,
     DEFAULT_SITE_ROOT,
-    DOMAIN,
 )
 from .coordinator import HealthchecksioDataUpdateCoordinator
 from .helpers import clean_url
@@ -72,29 +71,19 @@ async def async_unload_entry(
 ) -> bool:
     """Unload a config entry."""
     _LOGGER.debug("Unloading Config Entry: %s", config_entry.as_dict())
-    curr_plat: list[str] = [
-        p.domain
-        for p in entity_platform.async_get_platforms(hass, DOMAIN)
-        if p.config_entry is not None and config_entry.entry_id == p.config_entry.entry_id
-    ]
 
-    if curr_plat:
-        _LOGGER.debug("Unloading Platforms: %s", curr_plat)
-        try:
-            unload_ok = await hass.config_entries.async_unload_platforms(
-                config_entry,
-                curr_plat,
-            )
-        except ValueError as e:
-            unload_ok = False
-            _LOGGER.error(
-                "Unable to unload platforms. %s: %s",
-                e.__class__.__qualname__,
-                e,
-            )
-    else:
-        unload_ok = False
-        _LOGGER.error("Unable to identify platforms to unload")
+    platforms: list[Platform] = []
+    if config_entry.data.get(CONF_CREATE_BINARY_SENSOR):
+        platforms.append(Platform.BINARY_SENSOR)
+    if config_entry.data.get(CONF_CREATE_SENSOR):
+        platforms.append(Platform.SENSOR)
+
+    _LOGGER.debug("Unloading Platforms: %s", platforms)
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        config_entry,
+        platforms,
+    )
+
     if unload_ok:
         _LOGGER.info("Successfully removed the HealthChecks.io integration")
     return unload_ok
