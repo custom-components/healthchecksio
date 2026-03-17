@@ -3,7 +3,7 @@
         "step": {
             "user": {
                 "title": "Healthchecks.io",
-                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
+                "description": "If you need help with the configuration have a look [here]({docs_url})",
                 "data": {
                     "api_key": "API key",
                     "check": "Check ID",
@@ -12,7 +12,7 @@
             },
             "self_hosted": {
                 "title": "Healthchecks.io self-hosted instance",
-                "description": "If you need help with the configuration have a look here: https://github.com/custom-components/healthchecksio",
+                "description": "If you need help with the configuration have a look [here]({docs_url})",
                 "data": {
                     "site_root": "Instance root URL",
                     "ping_endpoint": "Ping endpoint"
