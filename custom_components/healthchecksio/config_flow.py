@@ -124,7 +124,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             step_id="self_hosted",
             data_schema=vol.Schema(data_schema),
             errors=self._errors,
-            description_placeholders={"docs_url": "https://github.com/custom-components/healthchecksio"},
+            description_placeholders={"docs_url": DOCS_URL},
         )
 
     async def _test_credentials(
