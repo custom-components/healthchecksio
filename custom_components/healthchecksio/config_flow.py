@@ -15,6 +15,7 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import DOMAIN, OFFICIAL_SITE_ROOT
 
 LOGGER = getLogger(__name__)
+DOCS_URL = "https://github.com/custom-components/healthchecksio"
 
 
 @config_entries.HANDLERS.register(DOMAIN)
@@ -80,7 +81,10 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
         data_schema[vol.Required("check", default=check)] = str
         data_schema[vol.Required("self_hosted", default=self_hosted)] = bool
         return self.async_show_form(
-            step_id="user", data_schema=vol.Schema(data_schema), errors=self._errors
+            step_id="user",
+            data_schema=vol.Schema(data_schema),
+            errors=self._errors,
+            description_placeholders={"docs_url": DOCS_URL},
         )
 
     async def async_step_self_hosted(self, user_input):
@@ -120,6 +124,7 @@ class BlueprintFlowHandler(config_entries.ConfigFlow):
             step_id="self_hosted",
             data_schema=vol.Schema(data_schema),
             errors=self._errors,
+            description_placeholders={"docs_url": DOCS_URL},
         )
 
     async def _test_credentials(
